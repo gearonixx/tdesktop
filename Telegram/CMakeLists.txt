@@ -1667,6 +1667,8 @@ PRIVATE
     storage/localimageloader.h
     storage/localstorage.cpp
     storage/localstorage.h
+    storage/offline/offline_notes_storage.cpp
+    storage/offline/offline_notes_storage.h
     storage/serialize_common.cpp
     storage/serialize_common.h
     storage/serialize_document.cpp
