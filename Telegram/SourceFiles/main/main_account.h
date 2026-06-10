@@ -58,6 +58,9 @@ public:
 		int streamVersion,
 		std::unique_ptr<SessionSettings> settings);
 
+	// Offline Notes: synthesize a logged-in self session with no network.
+	void createOfflineSession();
+
 	void logOut();
 	void forcedLogOut();
 	[[nodiscard]] bool loggingOut() const;

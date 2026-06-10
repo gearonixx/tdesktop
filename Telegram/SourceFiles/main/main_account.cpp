@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "base/platform/base_platform_info.h"
 #include "core/application.h"
+#include "core/offline_notes.h"
 #include "storage/storage_account.h"
 #include "storage/storage_domain.h" // Storage::StartResult.
 #include "storage/serialize_common.h"
@@ -84,6 +85,9 @@ void Account::start(std::unique_ptr<MTP::Config> config) {
 	_appConfig->start();
 	watchProxyChanges();
 	watchSessionChanges();
+	if (Core::OfflineNotes::Enabled() && !sessionExists()) {
+		createOfflineSession();
+	}
 }
 
 void Account::prepareToStartAdded(
@@ -197,6 +201,42 @@ void Account::createSession(
 	_sessionValue = _session.get();
 
 	Ensures(_session != nullptr);
+}
+
+void Account::createOfflineSession() {
+	Expects(_mtp != nullptr);
+
+	if (sessionExists()) {
+		return;
+	}
+	const auto self = Core::OfflineNotes::SelfUserId();
+	_sessionUserId = self;
+	createSession(
+		MTP_user(
+			MTP_flags(MTPDuser::Flag::f_self),
+			MTP_long(self.bare),
+			MTPlong(), // access_hash
+			MTPstring(), // first_name
+			MTPstring(), // last_name
+			MTPstring(), // username
+			MTPstring(), // phone
+			MTPUserProfilePhoto(),
+			MTPUserStatus(),
+			MTPint(), // bot_info_version
+			MTPVector<MTPRestrictionReason>(),
+			MTPstring(), // bot_inline_placeholder
+			MTPstring(), // lang_code
+			MTPEmojiStatus(),
+			MTPVector<MTPUsername>(),
+			MTPRecentStory(),
+			MTPPeerColor(), // color
+			MTPPeerColor(), // profile_color
+			MTPint(), // bot_active_users
+			MTPlong(), // bot_verification_icon
+			MTPlong()), // send_paid_messages_stars
+		QByteArray(),
+		0,
+		std::make_unique<SessionSettings>());
 }
 
 void Account::destroySession(DestroyReason reason) {

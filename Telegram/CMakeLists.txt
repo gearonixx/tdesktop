@@ -529,6 +529,8 @@ PRIVATE
     core/launcher.h
     core/local_url_handlers.cpp
     core/local_url_handlers.h
+    core/offline_notes.cpp
+    core/offline_notes.h
     core/phone_click_handler.cpp
     core/phone_click_handler.h
     core/sandbox.cpp

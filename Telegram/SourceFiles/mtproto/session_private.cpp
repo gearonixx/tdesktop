@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "base/options.h"
+#include "core/offline_notes.h"
 #include "mtproto/session_private.h"
 
 #include "mtproto/details/mtproto_bound_key_creator.h"
@@ -1008,6 +1009,12 @@ void SessionPrivate::restartNow() {
 }
 
 void SessionPrivate::connectToServer(bool afterConfig) {
+	if (Core::OfflineNotes::Enabled()) {
+		// Offline Notes: never open a network connection. Requests queue in
+		// memory and are simply never sent.
+		destroyAllConnections();
+		return;
+	}
 	if (afterConfig && (!_testConnections.empty() || _connection)) {
 		return;
 	}
