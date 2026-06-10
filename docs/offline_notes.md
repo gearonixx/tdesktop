@@ -54,3 +54,47 @@ paths, with `|`/`%` percent-escaped). Bodies are arbitrary text; a literal
 
 See `storage/offline/offline_notes_storage.h` for the API
 (`load` / `append` / `update` / `remove` / `importMedia`).
+
+## Status (offline-notes branch)
+
+| Milestone | State | Where |
+|-----------|-------|-------|
+| M1 storage | Done, unit-tested vs system Qt6 | `storage/offline/` |
+| M2 offline boot | Code-complete | `Account::createOfflineSession()`, called from `Account::start()` |
+| M3 network kill-switch | Code-complete | guard in `SessionPrivate::connectToServer()` |
+| M4 single chat | Partial: auto-opens self chat | `Window::Controller` session handler |
+| M5 persistence | Code-complete (text send/load/delete; edit when fired) | `Data::OfflineNotes`, `Histories::sendPreparedMessage`, `HistoryItem::markOfflineDelivered()` |
+
+Everything keys off `Core::OfflineNotes::Enabled()` (`core/offline_notes.h`),
+which currently returns `true` for this branch.
+
+### Build verification — IMPORTANT
+
+Only M1 is compile-verified (standalone, against system Qt6Core). **M2–M5 are
+not compiled in the dev environment** because the full app can't be built
+natively here: it needs a patched Qt + gcc-toolset-14 (present only in the
+Docker build image, which produced `out/Release/Telegram` from `/usr/src/...`).
+The integration code was written matched to the real APIs by reading them, but
+must be compiled via `Telegram/build/docker` and have any errors ironed out.
+
+### Remaining work
+
+- M4: hide the chats-list column and the peer name/avatar/status (top bar) so
+  only messages show. Lives in the responsive 3-column layout — needs a live
+  build to iterate safely.
+- M5: wire media (photos/videos/files) and reactions through the store; persist
+  a pin toggle immediately (currently captured only when a note is re-saved).
+  `persistEdit` must merge (not overwrite) media/reactions once they exist.
+- Convert message entities (bold/italic/links) to/from Markdown on save/load
+  (today the plain text is stored; URLs survive as plain text).
+
+### Manual test plan (after a successful build)
+
+1. Launch with empty working dir → no login screen; app opens directly in one
+   chat. Confirm zero network (e.g. `ss -tp` shows no Telegram connections).
+2. Send a few messages → each shows as delivered (no perpetual clock). Confirm
+   `<workdir>/notes/messages.md` gains a `<!--note ...-->` block per message.
+3. Edit a message → the block's body updates and `edited="..."` appears.
+4. Delete a message → its block disappears from `messages.md`.
+5. Restart → all messages reload in order from `messages.md`.
+6. Hand-edit `messages.md` in an external editor, restart → changes reflected.
