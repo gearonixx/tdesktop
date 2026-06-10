@@ -17,6 +17,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/offline/offline_notes_storage.h"
 
 #include "base/unixtime.h"
+#include "base/debug_log.h"
 
 namespace Data {
 
@@ -27,9 +28,11 @@ OfflineNotes::OfflineNotes(not_null<Main::Session*> session)
 : _session(session) {
 	load();
 
+	// NewAdded is only fired for server messages, so new local notes are
+	// persisted via noteSent() from the send path. Edited/Destroyed do fire
+	// for local messages and are handled here.
 	_session->changes().messageUpdates(
-		MessageUpdate::Flag::NewAdded
-		| MessageUpdate::Flag::Edited
+		MessageUpdate::Flag::Edited
 		| MessageUpdate::Flag::Destroyed
 	) | rpl::on_next([=](const MessageUpdate &update) {
 		const auto item = update.item;
@@ -38,14 +41,19 @@ OfflineNotes::OfflineNotes(not_null<Main::Session*> session)
 		}
 		if (update.flags & MessageUpdate::Flag::Destroyed) {
 			persistRemove(item);
-		} else if (update.flags & MessageUpdate::Flag::NewAdded) {
-			if (!_loading) {
-				persistNew(item);
-			}
 		} else if (update.flags & MessageUpdate::Flag::Edited) {
 			persistEdit(item);
 		}
 	}, _lifetime);
+}
+
+void OfflineNotes::noteSent(not_null<HistoryItem*> item) {
+	DEBUG_LOG(("OfflineNotes: noteSent inChat=%1 mapped=%2"
+		).arg(inNotesChat(item) ? 1 : 0
+		).arg(_noteIds.contains(item) ? 1 : 0));
+	if (inNotesChat(item)) {
+		persistNew(item);
+	}
 }
 
 OfflineNotes::~OfflineNotes() = default;
@@ -70,6 +78,10 @@ void OfflineNotes::load() {
 		_noteIds.emplace(item, note.id);
 	}
 	_loading = false;
+	DEBUG_LOG(("OfflineNotes: loaded %1 notes into history=%2 from %3"
+		).arg(notes.size()
+		).arg(_history ? 1 : 0
+		).arg(_folder->folderPath()));
 }
 
 bool OfflineNotes::inNotesChat(not_null<HistoryItem*> item) const {
@@ -90,6 +102,8 @@ void OfflineNotes::persistNew(not_null<HistoryItem*> item) {
 	}
 	auto note = noteFrom(item);
 	const auto id = _folder->append(std::move(note));
+	DEBUG_LOG(("OfflineNotes: persistNew text='%1' -> id='%2'"
+		).arg(item->originalText().text.left(20)).arg(id));
 	if (!id.isEmpty()) {
 		_noteIds.emplace(item, id);
 	}

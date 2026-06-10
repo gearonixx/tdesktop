@@ -35,6 +35,11 @@ public:
 	explicit OfflineNotes(not_null<Main::Session*> session);
 	~OfflineNotes();
 
+	// Called from the offline send path for a just-created local message:
+	// persists it as a new note. addNewLocalMessage does not fire a NewAdded
+	// update, so this is driven directly rather than via an observer.
+	void noteSent(not_null<HistoryItem*> item);
+
 private:
 	void load();
 	void persistNew(not_null<HistoryItem*> item);

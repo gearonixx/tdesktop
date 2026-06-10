@@ -30,6 +30,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_element.h"
 #include "core/application.h"
 #include "core/offline_notes.h"
+#include "data/data_offline_notes.h"
 #include "apiwrap.h"
 
 namespace Data {
@@ -1087,12 +1088,18 @@ int Histories::sendPreparedMessage(
 		Fn<void(const MTPUpdates&, const MTP::Response&)> done,
 		Fn<void(const MTP::Error&, const MTP::Response&)> fail) {
 	if (Core::OfflineNotes::Enabled()) {
-		// Offline Notes: the local message was already created and displayed
-		// (and persisted to disk via Data::OfflineNotes). There is no server,
-		// so just confirm it as delivered instead of sending anything.
-		if (const auto item = _owner->message(
-				_owner->messageIdByRandomId(randomId))) {
+		// Offline Notes: the local message was already created and displayed.
+		// There is no server, so confirm it delivered and persist it to disk
+		// instead of sending anything.
+		const auto fullId = _owner->messageIdByRandomId(randomId);
+		const auto item = _owner->message(fullId);
+		DEBUG_LOG(("OfflineNotes: sendPrepared randomId=%1 peer=%2 found=%3"
+			).arg(randomId).arg(history->peer->id.value).arg(item ? 1 : 0));
+		if (item) {
 			item->markOfflineDelivered();
+			if (const auto notes = _owner->session().offlineNotes()) {
+				notes->noteSent(item);
+			}
 		}
 		return 0;
 	}
