@@ -10,6 +10,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_updates.h"
 #include "core/application.h"
 #include "core/click_handler_types.h"
+#include "core/offline_notes.h"
+#include "data/data_user.h"
 #include "export/export_manager.h"
 #include "ui/platform/ui_platform_window.h"
 #include "platform/platform_window_title.h"
@@ -187,6 +189,17 @@ void Controller::showAccount(
 		if (session) {
 			setupSideBar();
 			setupMain(singlePeerShowAtMsgId, std::move(oldContentCache));
+
+			if (Core::OfflineNotes::Enabled()) {
+				// Single nameless chat: land straight in the self ("notes")
+				// chat every launch.
+				const auto controller = _sessionController.get();
+				crl::on_main(controller, [=] {
+					controller->showPeerHistory(
+						session->user(),
+						SectionShow::Way::ClearStack);
+				});
+			}
 
 			session->updates().isIdleValue(
 			) | rpl::filter([=](bool idle) {

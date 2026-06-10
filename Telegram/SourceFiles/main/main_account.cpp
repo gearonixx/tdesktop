@@ -210,7 +210,6 @@ void Account::createOfflineSession() {
 		return;
 	}
 	const auto self = Core::OfflineNotes::SelfUserId();
-	_sessionUserId = self;
 	createSession(
 		MTP_user(
 			MTP_flags(MTPDuser::Flag::f_self),
