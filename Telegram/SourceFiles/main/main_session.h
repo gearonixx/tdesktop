@@ -43,6 +43,7 @@ class LocationPickers;
 class Credits;
 class PromoSuggestions;
 class Passkeys;
+class OfflineNotes;
 } // namespace Data
 
 namespace Settings {
@@ -194,6 +195,9 @@ public:
 	[[nodiscard]] Data::Session &data() const {
 		return *_data;
 	}
+	[[nodiscard]] Data::OfflineNotes *offlineNotes() const {
+		return _offlineNotes.get();
+	}
 	[[nodiscard]] SessionSettings &settings() const {
 		return *_settings;
 	}
@@ -338,6 +342,9 @@ private:
 
 	QByteArray _tmpPassword;
 	TimeId _tmpPasswordValidUntil = 0;
+
+	// Offline Notes: bridges the self chat to the on-disk Markdown store.
+	std::unique_ptr<Data::OfflineNotes> _offlineNotes;
 
 	rpl::lifetime _lifetime;
 

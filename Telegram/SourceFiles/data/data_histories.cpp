@@ -29,6 +29,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_item_helpers.h"
 #include "history/view/history_view_element.h"
 #include "core/application.h"
+#include "core/offline_notes.h"
 #include "apiwrap.h"
 
 namespace Data {
@@ -1085,6 +1086,16 @@ int Histories::sendPreparedMessage(
 		Fn<PreparedMessage(not_null<History*>, FullReplyTo)> message,
 		Fn<void(const MTPUpdates&, const MTP::Response&)> done,
 		Fn<void(const MTP::Error&, const MTP::Response&)> fail) {
+	if (Core::OfflineNotes::Enabled()) {
+		// Offline Notes: the local message was already created and displayed
+		// (and persisted to disk via Data::OfflineNotes). There is no server,
+		// so just confirm it as delivered instead of sending anything.
+		if (const auto item = _owner->message(
+				_owner->messageIdByRandomId(randomId))) {
+			item->markOfflineDelivered();
+		}
+		return 0;
+	}
 	if (isCreatingTopic(history, replyTo.topicRootId)) {
 		const auto id = ++_requestAutoincrement;
 		const auto creatingId = FullMsgId(

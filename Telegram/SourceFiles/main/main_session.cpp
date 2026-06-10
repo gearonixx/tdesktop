@@ -42,6 +42,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/components/top_peers.h"
 #include "settings/settings_faq_suggestions.h"
 #include "data/data_session.h"
+#include "data/data_offline_notes.h"
 #include "data/data_changes.h"
 #include "data/data_user.h"
 #include "data/data_download_manager.h"
@@ -54,6 +55,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "support/support_helper.h"
 #include "lang/lang_keys.h"
 #include "core/application.h"
+#include "core/offline_notes.h"
 #include "ui/text/text_utilities.h"
 #include "ui/layers/generic_box.h"
 #include "styles/style_layers.h"
@@ -255,6 +257,10 @@ Session::Session(
 	) | rpl::on_next([=] {
 		appConfigRefreshed();
 	}, _lifetime);
+
+	if (Core::OfflineNotes::Enabled()) {
+		_offlineNotes = std::make_unique<Data::OfflineNotes>(this);
+	}
 }
 
 void Session::appConfigRefreshed() {

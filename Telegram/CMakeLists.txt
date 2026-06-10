@@ -647,6 +647,8 @@ PRIVATE
     data/data_groups.h
     data/data_histories.cpp
     data/data_histories.h
+    data/data_offline_notes.cpp
+    data/data_offline_notes.h
     data/data_history_messages.cpp
     data/data_history_messages.h
     data/data_lastseen_status.h

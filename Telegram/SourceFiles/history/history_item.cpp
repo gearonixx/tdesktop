@@ -2646,6 +2646,14 @@ void HistoryItem::setRealId(MsgId newId) {
 	}
 }
 
+void HistoryItem::markOfflineDelivered() {
+	if (!(_flags & MessageFlag::BeingSent)) {
+		return;
+	}
+	_flags &= ~MessageFlag::BeingSent;
+	_history->owner().requestItemRepaint(this);
+}
+
 bool HistoryItem::canPin() const {
 	if (!isRegular() || isService()) {
 		return false;

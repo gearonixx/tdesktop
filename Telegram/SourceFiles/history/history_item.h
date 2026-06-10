@@ -434,6 +434,11 @@ public:
 		bool isForumPost);
 	void setPostAuthor(const QString &author);
 	void setRealId(MsgId newId);
+
+	// Offline Notes: confirm a just-"sent" local message without a server,
+	// clearing the sending (clock) state so it shows as delivered.
+	void markOfflineDelivered();
+
 	void incrementReplyToTopCounter();
 	void applyEffectWatchedOnUnreadKnown();
 
