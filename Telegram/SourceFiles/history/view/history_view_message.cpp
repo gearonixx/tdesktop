@@ -12,6 +12,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/qt/qt_key_modifiers.h"
 #include "base/unixtime.h"
 #include "core/click_handler_types.h" // ClickHandlerContext
+#include "core/offline_notes.h"
 #include "core/ui_integration.h"
 #include "history/view/history_view_cursor_state.h"
 #include "history/history_item_components.h"
@@ -2740,6 +2741,10 @@ void Message::unloadHeavyPart() {
 }
 
 bool Message::hasFromPhoto() const {
+	if (Core::OfflineNotes::Enabled()) {
+		// Single nameless chat: never show per-message avatars.
+		return false;
+	}
 	if (isHidden()) {
 		return false;
 	}
@@ -4228,6 +4233,10 @@ bool Message::displayForwardedFrom() const {
 }
 
 bool Message::hasOutLayout() const {
+	if (Core::OfflineNotes::Enabled()) {
+		// Single nameless chat: notes are left-aligned, not outgoing-style.
+		return false;
+	}
 	const auto item = data();
 	if (item->history()->peer->isSelf()) {
 		if (const auto forwarded = item->Get<HistoryMessageForwarded>()) {

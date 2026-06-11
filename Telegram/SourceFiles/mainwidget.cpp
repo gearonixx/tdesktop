@@ -74,6 +74,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mtproto/mtproto_dc_options.h"
 #include "core/update_checker.h"
 #include "core/shortcuts.h"
+#include "core/offline_notes.h"
 #include "core/application.h"
 #include "core/changelogs.h"
 #include "core/mime_type.h"
@@ -2853,7 +2854,8 @@ void MainWidget::updateWindowAdaptiveLayout() {
 
 	// Check if we are in a single-column layout in a wide enough window
 	// for the normal layout. If so, switch to the normal layout.
-	if (layout.windowLayout == Window::Adaptive::WindowLayout::OneColumn) {
+	if (layout.windowLayout == Window::Adaptive::WindowLayout::OneColumn
+		&& !Core::OfflineNotes::Enabled()) {
 		auto chatWidth = layout.chatWidth;
 		//if (session().settings().tabbedSelectorSectionEnabled()
 		//	&& chatWidth >= _history->minimalWidthForTabbedSelectorSection()) {

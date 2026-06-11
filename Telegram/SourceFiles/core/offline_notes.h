@@ -23,4 +23,7 @@ namespace Core::OfflineNotes {
 // Folder holding messages.md + media/ (see storage/offline/).
 [[nodiscard]] QString FolderPath();
 
+// The embedded dark palette applied as the default theme in offline mode.
+[[nodiscard]] QByteArray PaletteData();
+
 } // namespace Core::OfflineNotes

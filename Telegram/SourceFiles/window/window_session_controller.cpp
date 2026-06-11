@@ -70,6 +70,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/emoji_interactions.h"
 #include "core/shortcuts.h"
 #include "core/application.h"
+#include "core/offline_notes.h"
 #include "core/click_handler_types.h"
 #include "core/file_utilities.h"
 #include "core/ui_integration.h"
@@ -2482,6 +2483,11 @@ auto SessionController::computeColumnLayout() const -> ColumnLayout {
 
 	auto bodyWidth = widget()->bodyWidget()->width() - filtersWidth();
 	auto dialogsWidth = 0, chatWidth = 0, thirdWidth = 0;
+
+	if (Core::OfflineNotes::Enabled()) {
+		// Single nameless chat: always one full-width column, no dialogs/third.
+		return { bodyWidth, bodyWidth, bodyWidth, 0, layout };
+	}
 
 	auto useOneColumnLayout = [&] {
 		auto minimalNormal = st::columnMinimalWidthLeft

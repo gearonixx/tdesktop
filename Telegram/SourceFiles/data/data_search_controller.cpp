@@ -9,6 +9,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "main/main_session.h"
 #include "data/data_session.h"
+#include "data/data_offline_notes.h"
+#include "data/data_peer.h"
+#include "core/offline_notes.h"
+#include "base/debug_log.h"
 #include "data/data_messages.h"
 #include "data/data_channel.h"
 #include "data/data_histories.h"
@@ -521,6 +525,26 @@ void SearchController::requestMore(
 		const Query &query,
 		Data *listData) {
 	if (listData->requests.contains(key)) {
+		return;
+	}
+	if (Core::OfflineNotes::Enabled()) {
+		// Offline: search the local notes instead of querying the server,
+		// and report a full id range so nothing more is requested.
+		auto ids = std::vector<MsgId>();
+		if (listData->peer->isSelf()) {
+			if (const auto notes = _session->offlineNotes()) {
+				for (const auto &full : notes->search(query.query)) {
+					ids.push_back(full.msg);
+				}
+			}
+		}
+		const auto count = int(ids.size());
+		DEBUG_LOG(("OfflineNotes: dialogs search '%1' -> %2 results"
+			).arg(query.query).arg(count));
+		listData->list.addSlice(
+			std::move(ids),
+			MsgRange{ 0, ServerMaxMsgId },
+			count);
 		return;
 	}
 	auto prepared = PrepareSearchRequest(

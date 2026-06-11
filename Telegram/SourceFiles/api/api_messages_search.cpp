@@ -13,6 +13,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_message_reaction_id.h"
 #include "data/data_peer.h"
 #include "data/data_session.h"
+#include "data/data_offline_notes.h"
+#include "core/offline_notes.h"
+#include "base/debug_log.h"
 #include "history/history.h"
 #include "history/history_item.h"
 #include "main/main_session.h"
@@ -87,6 +90,19 @@ void MessagesSearch::searchMore() {
 
 void MessagesSearch::searchRequest() {
 	const auto nextToken = RequestToToken(_request);
+	if (Core::OfflineNotes::Enabled()) {
+		// Offline: search the local notes instead of querying the server.
+		auto messages = MessageIdsList();
+		if (const auto notes = _history->session().offlineNotes()) {
+			messages = notes->search(_request.query);
+		}
+		DEBUG_LOG(("OfflineNotes: search '%1' -> %2 results"
+			).arg(_request.query).arg(messages.size()));
+		_requestId = 0;
+		const auto total = int(messages.size());
+		_messagesFounds.fire({ total, std::move(messages), nextToken });
+		return;
+	}
 	if (!_offsetId) {
 		const auto it = _cacheOfStartByToken.find(nextToken);
 		if (it != end(_cacheOfStartByToken)) {

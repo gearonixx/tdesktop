@@ -10,6 +10,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_editing.h"
 #include "api/api_send_progress.h"
 #include "storage/localimageloader.h"
+#include "core/offline_notes.h"
 #include "storage/file_download.h"
 #include "data/data_document.h"
 #include "data/data_document_media.h"
@@ -291,12 +292,17 @@ FullMsgId Uploader::currentUploadId() const {
 void Uploader::upload(
 		FullMsgId itemId,
 		const std::shared_ptr<FilePrepareResult> &file) {
+	// Offline Notes: do the local image/document caching below so the media
+	// displays, but skip the uploadingData spinner and the network queue.
+	const auto offline = Core::OfflineNotes::Enabled();
 	if (file->type == SendMediaType::Photo) {
 		const auto photo = session().data().processPhoto(
 			file->photo,
 			file->photoThumbs);
-		photo->uploadingData = std::make_unique<Data::UploadState>(
-			file->partssize);
+		if (!offline) {
+			photo->uploadingData = std::make_unique<Data::UploadState>(
+				file->partssize);
+		}
 	} else if (file->type == SendMediaType::File
 		|| file->type == SendMediaType::ThemeFile
 		|| file->type == SendMediaType::Audio
@@ -309,8 +315,10 @@ void Uploader::upload(
 					file->thumb,
 					ThumbnailFormat(file->filemime),
 					file->thumbbytes));
-		document->uploadingData = std::make_unique<Data::UploadState>(
-			document->size);
+		if (!offline) {
+			document->uploadingData = std::make_unique<Data::UploadState>(
+				document->size);
+		}
 		if (const auto active = document->activeMediaView()) {
 			if (!file->goodThumbnail.isNull()) {
 				active->setGoodThumbnail(std::move(file->goodThumbnail));
@@ -340,6 +348,10 @@ void Uploader::upload(
 				file->videoCover->photo,
 				file->videoCover->photoThumbs);
 		}
+	}
+	if (offline) {
+		// Local media is cached and displayable; nothing to upload.
+		return;
 	}
 	_queue.push_back({ itemId, file });
 	if (!_nextTimer.isActive()) {

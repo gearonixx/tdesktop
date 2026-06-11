@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mtproto/mtproto_dc_options.h"
 #include "mtproto/mtproto_auth_key.h"
 #include "base/unixtime.h"
+#include "core/offline_notes.h"
 #include "base/openssl_help.h"
 #include "base/call_delayed.h"
 
@@ -280,6 +281,10 @@ void SpecialConfigRequest::sendNextRequest() {
 }
 
 void SpecialConfigRequest::performRequest(const Attempt &attempt) {
+	if (Core::OfflineNotes::Enabled()) {
+		// Offline Notes: never reach out to DNS-over-HTTPS config fallbacks.
+		return;
+	}
 	const auto type = attempt.type;
 	auto url = QUrl();
 	url.setScheme(u"https"_q);

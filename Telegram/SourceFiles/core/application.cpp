@@ -67,6 +67,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "media/system_media_controls_manager.h"
 #include "window/notifications_manager.h"
 #include "window/themes/window_theme.h"
+#include "core/offline_notes.h"
+#include "data/data_wall_paper.h"
 #include "ui/widgets/tooltip.h"
 #include "ui/gl/gl_detection.h"
 #include "ui/text/text_options.h"
@@ -486,6 +488,21 @@ void Application::startDomain() {
 void Application::startSettingsAndBackground() {
 	Local::rewriteSettingsIfNeeded();
 	Window::Theme::Background()->start();
+	if (Core::OfflineNotes::Enabled()) {
+		// Apply the embedded dark palette as the default theme, and a flat
+		// background matching it (DarkShell uses a solid windowBg fill, not
+		// Telegram's default patterned wallpaper).
+		Window::Theme::ApplyEditedPalette(Core::OfflineNotes::PaletteData());
+		auto background = QImage(
+			512,
+			512,
+			QImage::Format_ARGB32_Premultiplied);
+		background.fill(st::windowBg->c);
+		Window::Theme::Background()->set(
+			Data::CustomWallPaper(),
+			std::move(background));
+		Window::Theme::Background()->setTile(false);
+	}
 	checkSystemDarkMode();
 }
 

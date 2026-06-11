@@ -16,6 +16,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_utilities.h"
 #include "ui/painter.h"
 #include "core/ui_integration.h"
+#include "core/offline_notes.h"
 #include "lang/lang_keys.h"
 #include "history/history_item_components.h"
 #include "history/history_item.h"
@@ -457,7 +458,7 @@ void BottomInfo::layoutDateText() {
 	const auto prefix = !author.isEmpty() ? u", "_q : QString();
 	const auto date = edited + ((_data.flags & Data::Flag::ForwardedDate)
 		? Ui::FormatDateTimeSavedFrom(_data.date)
-		: QLocale().toString(_data.date.time(), QLocale::ShortFormat));
+		: _data.date.time().toString(u"hh:mm"_q));
 	const auto afterAuthor = prefix + date;
 	const auto afterAuthorWidth = st::msgDateFont->width(afterAuthor);
 	const auto authorWidth = st::msgDateFont->width(author);
@@ -611,7 +612,8 @@ BottomInfo::Data BottomInfoDataFromMessage(not_null<Message*> message) {
 	auto result = BottomInfo::Data();
 	result.date = message->dateTime();
 	result.effectId = item->effectId();
-	if (message->hasOutLayout()) {
+	if (message->hasOutLayout() && !Core::OfflineNotes::Enabled()) {
+		// Single nameless chat: no sent/read tick on messages.
 		result.flags |= Flag::OutLayout;
 	}
 	if (message->context() == Context::Replies) {

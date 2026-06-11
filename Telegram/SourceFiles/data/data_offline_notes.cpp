@@ -47,6 +47,26 @@ OfflineNotes::OfflineNotes(not_null<Main::Session*> session)
 	}, _lifetime);
 }
 
+std::vector<FullMsgId> OfflineNotes::search(const QString &query) const {
+	auto result = std::vector<FullMsgId>();
+	const auto trimmed = query.trimmed();
+	if (trimmed.isEmpty()) {
+		return result;
+	}
+	for (const auto &[item, id] : _noteIds) {
+		if (item->originalText().text.contains(
+				trimmed,
+				Qt::CaseInsensitive)) {
+			result.push_back(item->fullId());
+		}
+	}
+	// Newest first, matching the server search ordering.
+	std::sort(result.begin(), result.end(), [](FullMsgId a, FullMsgId b) {
+		return a.msg > b.msg;
+	});
+	return result;
+}
+
 void OfflineNotes::noteSent(not_null<HistoryItem*> item) {
 	DEBUG_LOG(("OfflineNotes: noteSent inChat=%1 mapped=%2"
 		).arg(inNotesChat(item) ? 1 : 0

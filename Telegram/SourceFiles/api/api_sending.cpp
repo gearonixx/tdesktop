@@ -16,6 +16,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_channel.h" // ChannelData::addsSignature.
 #include "data/data_user.h" // UserData::name
 #include "data/data_session.h"
+#include "data/data_offline_notes.h"
+#include "core/offline_notes.h"
 #include "data/data_file_origin.h"
 #include "data/data_histories.h"
 #include "data/data_changes.h"
@@ -561,6 +563,7 @@ void SendConfirmedFile(
 			file->to.replyTo.topicRootId);
 	}
 
+	const auto offlineNotes = Core::OfflineNotes::Enabled();
 	session->uploader().upload(newId, file);
 
 	auto action = SendAction(history, file->to.options);
@@ -688,6 +691,17 @@ void SendConfirmedFile(
 			.effectId = file->to.options.effectId,
 			.suggest = HistoryMessageSuggestInfo(file->to.options),
 		}, caption, media);
+	}
+
+	if (offlineNotes && !isEditing) {
+		// No server to upload to: the local media message is already shown
+		// with its local file, so just confirm it delivered and persist it.
+		if (const auto item = session->data().message(newId)) {
+			item->markOfflineDelivered();
+			if (const auto notes = session->offlineNotes()) {
+				notes->noteSent(item);
+			}
+		}
 	}
 
 	if (isEditing) {

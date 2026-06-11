@@ -2651,6 +2651,11 @@ void HistoryItem::markOfflineDelivered() {
 		return;
 	}
 	_flags &= ~MessageFlag::BeingSent;
+	// The bottom-info "sending" (clock) state is cached in the view, so a bare
+	// repaint keeps showing it; force a data-change + resize to recompute it,
+	// like setRealId() does when a server confirms a message.
+	_history->owner().notifyItemDataChange(this);
+	_history->owner().requestItemResize(this);
 	_history->owner().requestItemRepaint(this);
 }
 

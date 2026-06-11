@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #pragma once
 
 #include "base/flat_map.h"
+#include "data/data_msg_id.h"
 
 #include <rpl/lifetime.h>
 #include <memory>
@@ -39,6 +40,10 @@ public:
 	// persists it as a new note. addNewLocalMessage does not fire a NewAdded
 	// update, so this is driven directly rather than via an observer.
 	void noteSent(not_null<HistoryItem*> item);
+
+	// Local full-text search over the notes (offline replacement for the
+	// server messages.search). Returns matching message ids, newest first.
+	[[nodiscard]] std::vector<FullMsgId> search(const QString &query) const;
 
 private:
 	void load();

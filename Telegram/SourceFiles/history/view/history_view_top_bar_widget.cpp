@@ -23,6 +23,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_keys.h"
 #include "core/shortcuts.h"
 #include "core/application.h"
+#include "core/offline_notes.h"
 #include "core/core_settings.h"
 #include "ui/controls/userpic_button.h"
 #include "ui/wrap/fade_wrap.h"
@@ -590,7 +591,9 @@ void TopBarWidget::paintTopBar(Painter &p) {
 			: folder
 			? folder->chatListName()
 			: peer->isSelf()
-			? tr::lng_saved_messages(tr::now)
+			? (Core::OfflineNotes::Enabled()
+				? QString()
+				: tr::lng_saved_messages(tr::now))
 			: peer->isRepliesChat()
 			? tr::lng_replies_messages(tr::now)
 			: peer->isVerifyCodes()
@@ -800,6 +803,10 @@ void TopBarWidget::mousePressEvent(QMouseEvent *e) {
 }
 
 void TopBarWidget::infoClicked() {
+	if (Core::OfflineNotes::Enabled()) {
+		// Single nameless chat: no peer/group info panel.
+		return;
+	}
 	const auto key = _activeChat.key;
 	if (!key) {
 		return;
@@ -979,6 +986,11 @@ bool TopBarWidget::rootChatsListBar() const {
 }
 
 void TopBarWidget::refreshInfoButton() {
+	if (Core::OfflineNotes::Enabled()) {
+		// Single nameless chat: no avatar in the header.
+		_info.destroy();
+		return;
+	}
 	if (_activeChat.key.topic()
 		|| (_activeChat.section == Section::ChatsList
 			&& !rootChatsListBar())) {
@@ -1193,7 +1205,10 @@ void TopBarWidget::updateControlsVisibility() {
 		&& (isOneColumn
 			|| (_activeChat.section == Section::ChatsList)
 			|| !_controller->content()->stackIsEmpty());
-	_back->setVisible(backVisible && !_chooseForReportReason);
+	// Single nameless chat: no way out, so no back arrow.
+	_back->setVisible(backVisible
+		&& !_chooseForReportReason
+		&& !Core::OfflineNotes::Enabled());
 	_cancelChoose->setVisible(_chooseForReportReason.has_value());
 	if (_info) {
 		_info->setVisible(!_chooseForReportReason
