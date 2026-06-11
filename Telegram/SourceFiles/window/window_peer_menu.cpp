@@ -112,6 +112,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_peer_values.h"
 #include "dialogs/dialogs_key.h"
 #include "core/application.h"
+#include "core/offline_notes.h"
 #include "core/ui_integration.h"
 #include "export/export_manager.h"
 #include "boxes/peers/edit_participants_box.h"
@@ -802,6 +803,9 @@ void Filler::addClearHistory() {
 }
 
 void Filler::addDeleteChat() {
+	if (Core::OfflineNotes::Enabled()) {
+		return; // Single nameless chat: cannot be deleted.
+	}
 	if (_topic || (!_sublist && _peer->isChannel())) {
 		return;
 	}
@@ -936,6 +940,9 @@ void Filler::addDirectMessages() {
 }
 
 void Filler::addExportChat() {
+	if (Core::OfflineNotes::Enabled()) {
+		return; // Notes live on disk as Markdown; no export here.
+	}
 	if (!_peer->canExportChatHistory()) {
 		return;
 	}
@@ -1251,6 +1258,9 @@ bool Filler::skipCreateActions() const {
 }
 
 void Filler::addCreatePoll() {
+	if (Core::OfflineNotes::Enabled()) {
+		return; // Single nameless notes chat: no polls.
+	}
 	if (skipCreateActions()) {
 		return;
 	}
@@ -1331,6 +1341,9 @@ void Filler::addCreateTodoList() {
 }
 
 void Filler::addThemeEdit() {
+	if (Core::OfflineNotes::Enabled()) {
+		return; // Single nameless chat: no per-chat wallpaper.
+	}
 	if (_peer->isVerifyCodes() || _peer->isRepliesChat()) {
 		return;
 	}

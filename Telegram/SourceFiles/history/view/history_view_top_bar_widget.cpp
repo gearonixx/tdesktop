@@ -154,6 +154,12 @@ TopBarWidget::TopBarWidget(
 	_groupCall->setClickedCallback([=] { groupCall(); });
 	_menuToggle->addClickHandler([=](auto) { showPeerMenu(); });
 	_menuToggle->setAcceptBoth(true, true);
+	if (Core::OfflineNotes::Enabled()) {
+		// Repurpose the three-dots button as a single "clear history" button.
+		_menuToggle->setIconOverride(
+			&st::menuIconClear,
+			&st::menuIconClear);
+	}
 	_infoToggle->setClickedCallback([=] { toggleInfoSection(); });
 	_back->setAcceptBoth();
 	_back->addClickHandler([=](Qt::MouseButton) {
@@ -372,6 +378,13 @@ bool TopBarWidget::createMenu(
 }
 
 void TopBarWidget::showPeerMenu() {
+	if (Core::OfflineNotes::Enabled()) {
+		// The three-dots button is repurposed as a single "clear history".
+		if (const auto peer = _activeChat.key.peer()) {
+			Window::ClearHistoryHandler(_controller, peer)();
+		}
+		return;
+	}
 	const auto created = createMenu(_menuToggle);
 	if (!created) {
 		return;
