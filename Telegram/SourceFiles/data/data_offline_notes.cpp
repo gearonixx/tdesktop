@@ -67,6 +67,29 @@ std::vector<FullMsgId> OfflineNotes::search(const QString &query) const {
 	return result;
 }
 
+void OfflineNotes::noteSentWithMedia(
+		not_null<HistoryItem*> item,
+		const QByteArray &content,
+		const QString &filepath,
+		const QString &filename) {
+	if (!inNotesChat(item) || _noteIds.contains(item)) {
+		return;
+	}
+	auto rel = filepath.isEmpty()
+		? _folder->saveMediaBytes(content, filename)
+		: _folder->importMedia(filepath);
+	auto note = noteFrom(item);
+	if (!rel.isEmpty()) {
+		note.media.push_back(rel);
+	}
+	DEBUG_LOG(("OfflineNotes: noteSentWithMedia rel='%1' caption='%2'"
+		).arg(rel).arg(note.text.left(20)));
+	const auto id = _folder->append(std::move(note));
+	if (!id.isEmpty()) {
+		_noteIds.emplace(item, id);
+	}
+}
+
 void OfflineNotes::noteSent(not_null<HistoryItem*> item) {
 	DEBUG_LOG(("OfflineNotes: noteSent inChat=%1 mapped=%2"
 		).arg(inNotesChat(item) ? 1 : 0

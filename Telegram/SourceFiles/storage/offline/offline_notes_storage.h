@@ -84,6 +84,16 @@ public:
 	// suitable for Note::media. Returns empty on failure.
 	[[nodiscard]] QString importMedia(const QString &sourcePath) const;
 
+	// Writes raw bytes (e.g. a pasted image) into media/ under a name derived
+	// from the content hash + filenameHint's extension. Returns the relative
+	// path, or empty on failure.
+	[[nodiscard]] QString saveMediaBytes(
+		const QByteArray &bytes,
+		const QString &filenameHint) const;
+
+	// Absolute path for a note media entry (folder + relative path).
+	[[nodiscard]] QString mediaAbsolutePath(const QString &relative) const;
+
 	// Generates a stable, sortable, unique note id.
 	[[nodiscard]] static QString generateId();
 

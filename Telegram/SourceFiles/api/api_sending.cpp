@@ -699,7 +699,11 @@ void SendConfirmedFile(
 		if (const auto item = session->data().message(newId)) {
 			item->markOfflineDelivered();
 			if (const auto notes = session->offlineNotes()) {
-				notes->noteSent(item);
+				notes->noteSentWithMedia(
+					item,
+					file->content,
+					file->filepath,
+					file->filename);
 			}
 		}
 	}

@@ -351,4 +351,35 @@ QString NotesFolder::importMedia(const QString &sourcePath) const {
 	return QLatin1String(kMediaDir) + '/' + name;
 }
 
+QString NotesFolder::saveMediaBytes(
+		const QByteArray &bytes,
+		const QString &filenameHint) const {
+	if (bytes.isEmpty() || !ensureReady()) {
+		return QString();
+	}
+	const auto hash = QString::fromLatin1(
+		QCryptographicHash::hash(bytes, QCryptographicHash::Sha1).toHex())
+		.left(12);
+	const auto info = QFileInfo(filenameHint);
+	const auto suffix = info.suffix().isEmpty()
+		? QStringLiteral("bin")
+		: info.suffix();
+	const auto base = info.completeBaseName().left(40);
+	const auto name = (base.isEmpty() ? QStringLiteral("media") : base)
+		+ '_' + hash + '.' + suffix;
+	const auto target = mediaDirPath() + '/' + name;
+	if (!QFile::exists(target)) {
+		auto file = QFile(target);
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)
+			|| file.write(bytes) != bytes.size()) {
+			return QString();
+		}
+	}
+	return QLatin1String(kMediaDir) + '/' + name;
+}
+
+QString NotesFolder::mediaAbsolutePath(const QString &relative) const {
+	return relative.isEmpty() ? QString() : (_folderPath + '/' + relative);
+}
+
 } // namespace Storage::Offline

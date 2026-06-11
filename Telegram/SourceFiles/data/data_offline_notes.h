@@ -41,6 +41,14 @@ public:
 	// update, so this is driven directly rather than via an observer.
 	void noteSent(not_null<HistoryItem*> item);
 
+	// Like noteSent, but also saves the media file into media/ and records its
+	// path in the note. Pass either a filepath or raw content (e.g. a paste).
+	void noteSentWithMedia(
+		not_null<HistoryItem*> item,
+		const QByteArray &content,
+		const QString &filepath,
+		const QString &filename);
+
 	// Local full-text search over the notes (offline replacement for the
 	// server messages.search). Returns matching message ids, newest first.
 	[[nodiscard]] std::vector<FullMsgId> search(const QString &query) const;
