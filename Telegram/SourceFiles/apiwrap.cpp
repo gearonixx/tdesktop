@@ -56,6 +56,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_history_messages.h"
 #include "core/core_cloud_password.h"
 #include "core/application.h"
+#include "core/offline_notes.h"
 #include "base/unixtime.h"
 #include "base/random.h"
 #include "base/call_delayed.h"
@@ -88,6 +89,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/download_manager_mtproto.h"
 #include "storage/file_upload.h"
 #include "storage/storage_account.h"
+
+#include <limits>
 
 namespace {
 
@@ -4019,7 +4022,12 @@ void ApiWrap::sendMessage(
 
 	const auto exactWebPage = !message.webPage.url.isEmpty();
 	auto isFirst = true;
-	while (TextUtilities::CutPart(sending, left, MaxMessageSize)
+	// Offline Notes: there is no server protocol limit, so keep a long note
+	// as a single message instead of splitting it into 4096-char chunks.
+	const auto cutSize = Core::OfflineNotes::Enabled()
+		? std::numeric_limits<int>::max()
+		: int(MaxMessageSize);
+	while (TextUtilities::CutPart(sending, left, cutSize)
 		|| (isFirst && exactWebPage)) {
 		TextUtilities::Trim(left);
 		const auto isLast = left.empty();

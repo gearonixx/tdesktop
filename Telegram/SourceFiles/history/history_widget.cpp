@@ -4628,7 +4628,8 @@ void HistoryWidget::saveEditMessage(Api::SendOptions options) {
 			? MaxMessageSize
 			: Data::PremiumLimits(&session()).captionLengthCurrent();
 		const auto remove = _fieldCharsCountManager.count() - maxCaptionSize;
-		if (remove > 0) {
+		// Offline Notes: no protocol limit, so allow notes of any length.
+		if (remove > 0 && !Core::OfflineNotes::Enabled()) {
 			controller()->showToast(
 				tr::lng_edit_limit_reached(tr::now, lt_count, remove));
 #ifndef _DEBUG
