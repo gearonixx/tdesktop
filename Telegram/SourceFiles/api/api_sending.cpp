@@ -36,6 +36,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mainwidget.h"
 #include "apiwrap.h"
 
+#include <QtCore/QFileInfo>
+
 namespace Api {
 namespace {
 
@@ -699,11 +701,37 @@ void SendConfirmedFile(
 		if (const auto item = session->data().message(newId)) {
 			item->markOfflineDelivered();
 			if (const auto notes = session->offlineNotes()) {
+				// A clipboard paste has neither a source path nor raw
+				// content: its bytes live only in the upload parts (the
+				// freshly encoded JPEG for photos). Reassemble them so the
+				// media is actually written to notes/media and survives a
+				// restart.
+				auto content = file->content;
+				if (content.isEmpty() && file->filepath.isEmpty()) {
+					for (const auto &part : file->fileparts) {
+						content.append(part);
+					}
+				}
+				auto filename = file->filename;
+				if (filename.isEmpty()) {
+					filename = (file->type == SendMediaType::Photo)
+						? u"image.jpg"_q
+						: u"file.bin"_q;
+				} else if (file->type == SendMediaType::Photo
+					&& QFileInfo(filename).suffix().isEmpty()) {
+					filename += u".jpg"_q;
+				}
+				DEBUG_LOG(("OfflineNotes: SendConfirmedFile persist type=%1 "
+					"path='%2' content=%3 parts=%4"
+					).arg(int(file->type)
+					).arg(file->filepath
+					).arg(content.size()
+					).arg(file->fileparts.size()));
 				notes->noteSentWithMedia(
 					item,
-					file->content,
+					content,
 					file->filepath,
-					file->filename);
+					filename);
 			}
 		}
 	}
