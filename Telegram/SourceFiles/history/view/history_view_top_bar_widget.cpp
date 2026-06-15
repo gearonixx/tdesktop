@@ -605,7 +605,7 @@ void TopBarWidget::paintTopBar(Painter &p) {
 			? folder->chatListName()
 			: peer->isSelf()
 			? (Core::OfflineNotes::Enabled()
-				? QString()
+				? u"Locker"_q
 				: tr::lng_saved_messages(tr::now))
 			: peer->isRepliesChat()
 			? tr::lng_replies_messages(tr::now)
