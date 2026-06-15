@@ -26,6 +26,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/field_autocomplete.h"
 #include "core/application.h"
 #include "core/core_settings.h"
+#include "core/offline_notes.h"
 #include "core/shortcuts.h"
 #include "core/ui_integration.h"
 #include "data/notify/data_notify_settings.h"
@@ -2196,7 +2197,10 @@ void ComposeControls::orderControls() {
 }
 
 bool ComposeControls::showRecordButton() const {
-	return _features.recordMediaMessage
+	// Offline Notes: voice/round recording does not work here, so never show
+	// the microphone - the send button stays in its place instead.
+	return !Core::OfflineNotes::Enabled()
+		&& _features.recordMediaMessage
 		&& (_recordAvailability != Webrtc::RecordAvailability::None)
 		&& !_voiceRecordBar->isListenState()
 		&& !_voiceRecordBar->isRecordingByAnotherBar()

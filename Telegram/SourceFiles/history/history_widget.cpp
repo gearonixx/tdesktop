@@ -149,6 +149,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "media/audio/media_audio_capture.h"
 #include "media/player/media_player_instance.h"
 #include "core/application.h"
+#include "core/offline_notes.h"
 #include "apiwrap.h"
 #include "base/qthelp_regex.h"
 #include "ui/boxes/report_box_graphics.h"
@@ -5640,7 +5641,10 @@ bool HistoryWidget::isSearching() const {
 }
 
 bool HistoryWidget::showRecordButton() const {
-	return (_recordAvailability != Webrtc::RecordAvailability::None)
+	// Offline Notes: voice/round recording does not work here, so never show
+	// the microphone - the send button stays in its place instead.
+	return !Core::OfflineNotes::Enabled()
+		&& (_recordAvailability != Webrtc::RecordAvailability::None)
 		&& !_voiceRecordBar->isListenState()
 		&& !_voiceRecordBar->isRecordingByAnotherBar()
 		&& !HasSendText(_field)

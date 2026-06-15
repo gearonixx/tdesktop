@@ -253,7 +253,11 @@ TopBarWidget::TopBarWidget(
 		updateConnectingState();
 	}, lifetime());
 
-	setCursor(style::cur_pointer);
+	// Offline Notes: the header (avatar + "Locker" title) is not clickable, so
+	// keep the default cursor instead of the "open info" pointer.
+	setCursor(Core::OfflineNotes::Enabled()
+		? style::cur_default
+		: style::cur_pointer);
 	_call->setAccessibleName(tr::lng_profile_action_short_call(tr::now));
 	_groupCall->setAccessibleName(tr::lng_group_call_title(tr::now));
 	_search->setAccessibleName(tr::lng_shortcuts_search(tr::now));
@@ -347,7 +351,9 @@ void TopBarWidget::setChooseForReportReason(
 		toggleSelectedControls(false);
 		finishAnimating();
 	}
-	setCursor((nowNoReason && !showSelectedState())
+	setCursor((nowNoReason
+			&& !showSelectedState()
+			&& !Core::OfflineNotes::Enabled())
 		? style::cur_pointer
 		: style::cur_default);
 }
@@ -1000,11 +1006,24 @@ bool TopBarWidget::rootChatsListBar() const {
 
 void TopBarWidget::refreshInfoButton() {
 	if (Core::OfflineNotes::Enabled()) {
-		// Single nameless chat: no avatar in the header.
-		_info.destroy();
-		return;
-	}
-	if (_activeChat.key.topic()
+		// Single chat: show the fixed "Locker" star avatar - i.e. the peer's
+		// own userpic, not the Saved Messages / My Notes glyph. It stays
+		// non-interactive (see infoClicked + WA_TransparentForMouseEvents).
+		if (const auto peer = _activeChat.key.peer()) {
+			auto info = object_ptr<Ui::UserpicButton>(
+				this,
+				_controller,
+				peer->userpicPaintingPeer(),
+				Ui::UserpicButton::Role::Custom,
+				Ui::UserpicButton::Source::PeerPhoto,
+				st::topBarInfoButton,
+				peer->userpicShape());
+			_info.destroy();
+			_info = std::move(info);
+		} else {
+			_info.destroy();
+		}
+	} else if (_activeChat.key.topic()
 		|| (_activeChat.section == Section::ChatsList
 			&& !rootChatsListBar())) {
 		_info.destroy();
@@ -1413,7 +1432,7 @@ void TopBarWidget::showSelected(SelectedState state) {
 		updateControlsVisibility();
 	}
 	if (wasSelectedState != nowSelectedState && !_chooseForReportReason) {
-		setCursor(nowSelectedState
+		setCursor((nowSelectedState || Core::OfflineNotes::Enabled())
 			? style::cur_default
 			: style::cur_pointer);
 

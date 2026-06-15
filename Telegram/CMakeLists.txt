@@ -531,6 +531,7 @@ PRIVATE
     core/local_url_handlers.h
     core/offline_notes.cpp
     core/offline_notes.h
+    core/offline_notes_avatar.cpp
     core/offline_notes_palette.cpp
     core/phone_click_handler.cpp
     core/phone_click_handler.h

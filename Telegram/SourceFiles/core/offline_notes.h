@@ -26,4 +26,7 @@ namespace Core::OfflineNotes {
 // The embedded dark palette applied as the default theme in offline mode.
 [[nodiscard]] QByteArray PaletteData();
 
+// The embedded "Locker" chat avatar (a white star on black) as PNG bytes.
+[[nodiscard]] QByteArray AvatarData();
+
 } // namespace Core::OfflineNotes

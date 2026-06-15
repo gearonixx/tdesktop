@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_item.h"
 #include "main/main_session.h"
 #include "storage/offline/offline_notes_storage.h"
+#include "ui/image/image_location_factory.h"
 
 #include "base/unixtime.h"
 #include "base/debug_log.h"
@@ -258,6 +259,21 @@ void OfflineNotes::load() {
 	_folder->ensureReady();
 
 	_history = _session->data().history(_session->user());
+
+	// Give the single chat its fixed "Locker" star avatar. Offline => set it
+	// straight from the embedded PNG via an in-memory image location, so it
+	// renders everywhere the peer userpic is drawn without any up/download.
+	if (const auto self = _session->user()) {
+		const auto bytes = Core::OfflineNotes::AvatarData();
+		auto image = QImage();
+		if (image.loadFromData(bytes)) {
+			constexpr auto kAvatarPhotoId = PhotoId(0x10C5E70000000001ULL);
+			self->setUserpic(
+				kAvatarPhotoId,
+				Images::FromImageInMemory(image, "PNG", bytes).location,
+				false);
+		}
+	}
 
 	const auto notes = _folder->load();
 	_loading = true;
