@@ -88,6 +88,7 @@ namespace Data {
 namespace {
 
 constexpr auto kNextForUpgradeGiftTimeout = 5 * crl::time(1000);
+constexpr auto kDialogsApplyPerChunk = 50;
 
 using ViewElement = HistoryView::Element;
 
@@ -2477,6 +2478,56 @@ void Session::applyDialogs(
 	}
 	if (requestFolder && count) {
 		requestFolder->chatsList()->setCloudListSize(*count);
+	}
+}
+
+void Session::applyDialogsChunked(
+		Data::Folder *requestFolder,
+		const QVector<MTPMessage> &messages,
+		const QVector<MTPDialog> &dialogs,
+		std::optional<int> count) {
+	processMessages(messages, NewMessageType::Last);
+	for (const auto &dialog : dialogs) {
+		_dialogsToApplyChunked.push_back({ requestFolder, dialog });
+	}
+	if (requestFolder && count) {
+		requestFolder->chatsList()->setCloudListSize(*count);
+	}
+	if (!_dialogsApplyChunkScheduled && !_dialogsToApplyChunked.empty()) {
+		_dialogsApplyChunkScheduled = true;
+		crl::on_main(_session, [=] { applyDialogsChunk(); });
+	}
+}
+
+void Session::applyDialogsChunk() {
+	_dialogsApplyChunkScheduled = false;
+
+	auto changedFolders = base::flat_set<Folder*>();
+	auto topLevelChanged = false;
+	for (auto left = kDialogsApplyPerChunk
+		; left != 0 && !_dialogsToApplyChunked.empty()
+		; --left) {
+		auto entry = std::move(_dialogsToApplyChunked.front());
+		_dialogsToApplyChunked.pop_front();
+		entry.dialog.match([&](const auto &data) {
+			applyDialog(entry.requestFolder, data);
+		});
+		if (entry.requestFolder) {
+			changedFolders.emplace(entry.requestFolder);
+		} else {
+			topLevelChanged = true;
+		}
+	}
+	if (topLevelChanged) {
+		chatsListChanged(nullptr);
+	}
+	for (const auto folder : changedFolders) {
+		chatsListChanged(folder);
+	}
+
+	if (!_dialogsToApplyChunked.empty()) {
+		_dialogsApplyChunkScheduled = true;
+		crl::on_main(_session, [=] { applyDialogsChunk(); });
 	}
 }
 

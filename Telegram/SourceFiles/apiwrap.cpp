@@ -897,7 +897,7 @@ void ApiWrap::requestMoreDialogs(Data::Folder *folder) {
 		}, [&](const auto &data) {
 			_session->data().processUsers(data.vusers());
 			_session->data().processChats(data.vchats());
-			_session->data().applyDialogs(
+			_session->data().applyDialogsChunked(
 				folder,
 				data.vmessages().v,
 				data.vdialogs().v,
