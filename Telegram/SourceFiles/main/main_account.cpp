@@ -55,6 +55,7 @@ Account::~Account() {
 	if (const auto session = maybeSession()) {
 		session->saveSettingsNowIfNeeded();
 		_local->writeSearchSuggestionsIfNeeded();
+		_local->writeDialogsCacheIfNeeded();
 	}
 	destroySession(DestroyReason::Quitting);
 }

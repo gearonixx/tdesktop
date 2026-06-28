@@ -159,6 +159,18 @@ public:
 	void writeSearchSuggestions();
 	void readSearchSuggestions();
 
+	// Disk cache of the top-level dialogs list for instant cold-start paint.
+	// Pages (and the pinned dialogs response) are captured as raw serialized
+	// MTP responses during sync and replayed through the normal apply path on
+	// the next launch, so the chat list shows up before any network round-trip.
+	void dialogsCacheAddPage(const MTPmessages_Dialogs &result);
+	void dialogsCacheAddPinned(const MTPmessages_PeerDialogs &result);
+	void dialogsCacheFinish();
+	void writeDialogsCache();
+	void writeDialogsCacheDelayed();
+	void writeDialogsCacheIfNeeded();
+	void readDialogsCache();
+
 	void writeSelf();
 
 	// Read self is special, it can't get session from account, because
@@ -359,6 +371,7 @@ private:
 	FileKey _roundPlaceholderKey = 0;
 	FileKey _inlineBotsDownloadsKey = 0;
 	FileKey _mediaLastPlaybackPositionsKey = 0;
+	FileKey _dialogsCacheKey = 0;
 
 	qint64 _cacheTotalSizeLimit = 0;
 	qint64 _cacheBigFileTotalSizeLimit = 0;
@@ -373,8 +386,10 @@ private:
 	bool _searchSuggestionsRead = false;
 	bool _inlineBotsDownloadsRead = false;
 	bool _mediaLastPlaybackPositionsRead = false;
+	bool _dialogsCacheRead = false;
 
 	std::vector<std::pair<DocumentId, crl::time>> _mediaLastPlaybackPosition;
+	std::vector<QByteArray> _dialogsCachePages;
 
 	Webview::StorageId _webviewStorageIdBots;
 	Webview::StorageId _webviewStorageIdOther;
@@ -387,6 +402,7 @@ private:
 	base::Timer _writePrefsTimer;
 	base::Timer _writeLocationsTimer;
 	base::Timer _writeSearchSuggestionsTimer;
+	base::Timer _writeDialogsCacheTimer;
 	bool _mapChanged = false;
 	bool _prefsChanged = false;
 	bool _locationsChanged = false;

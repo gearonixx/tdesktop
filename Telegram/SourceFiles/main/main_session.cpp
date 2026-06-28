@@ -218,6 +218,11 @@ Session::Session(
 			saveSettingsDelayed();
 		}
 	}, [=] {
+		// Build the chat list from the on-disk dialogs cache first, so it
+		// paints immediately on cold start - before the network getDialogs
+		// round-trip and before the heavier sticker reads below.
+		local().readDialogsCache();
+	}, [=] {
 		// Storage::Account uses Main::Account::session() in those methods.
 		// So they can't be called during Main::Session construction.
 		//

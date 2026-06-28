@@ -50,7 +50,98 @@ using Database = Cache::Database;
 
 constexpr auto kDelayedWriteTimeout = crl::time(1000);
 constexpr auto kWriteSearchSuggestionsDelay = 5 * crl::time(1000);
+constexpr auto kWriteDialogsCacheDelay = 5 * crl::time(1000);
 constexpr auto kMaxSavedPlaybackPositions = 256;
+
+constexpr auto kDialogsCacheVersion = 1;
+constexpr auto kDialogsCacheMaxPages = 32;
+
+enum class DialogsCachePageType : quint8 {
+	Main = 0,
+	Pinned = 1,
+};
+
+template <typename Type>
+[[nodiscard]] QByteArray SerializeMtpObject(const Type &value) {
+	auto buffer = mtpBuffer();
+	value.write(buffer);
+	return QByteArray(
+		reinterpret_cast<const char*>(buffer.constData()),
+		int(buffer.size() * sizeof(mtpPrime)));
+}
+
+template <typename Type>
+[[nodiscard]] std::optional<Type> DeserializeMtpObject(
+		const QByteArray &bytes) {
+	if (bytes.isEmpty() || (bytes.size() % sizeof(mtpPrime)) != 0) {
+		return std::nullopt;
+	}
+	auto buffer = mtpBuffer(bytes.size() / sizeof(mtpPrime));
+	memcpy(buffer.data(), bytes.constData(), bytes.size());
+	auto from = buffer.constData();
+	const auto end = from + buffer.size();
+	auto result = Type();
+	if (!result.read(from, end)) {
+		return std::nullopt;
+	}
+	return result;
+}
+
+// Replay captured dialogs-list pages through the normal apply path, exactly as
+// the network done-handlers do (apiwrap.cpp), so the chat list is built before
+// any network round-trip on cold start. Main pages first, pinned afterwards.
+void ApplyDialogsCacheFrames(
+		not_null<Main::Session*> session,
+		const std::vector<QByteArray> &frames) {
+	auto &data = session->data();
+	const auto applyFrame = [&](
+			const QByteArray &frame,
+			DialogsCachePageType wanted) {
+		if (frame.isEmpty() || quint8(frame[0]) != quint8(wanted)) {
+			return;
+		}
+		const auto payload = frame.mid(1);
+		if (wanted == DialogsCachePageType::Main) {
+			const auto parsed = DeserializeMtpObject<MTPmessages_Dialogs>(
+				payload);
+			if (!parsed) {
+				return;
+			}
+			parsed->match([](const MTPDmessages_dialogsNotModified &) {
+			}, [&](const auto &fields) {
+				data.processUsers(fields.vusers());
+				data.processChats(fields.vchats());
+				data.applyDialogs(
+					nullptr,
+					fields.vmessages().v,
+					fields.vdialogs().v);
+			});
+		} else {
+			const auto parsed = DeserializeMtpObject<MTPmessages_PeerDialogs>(
+				payload);
+			if (!parsed) {
+				return;
+			}
+			parsed->match([&](const MTPDmessages_peerDialogs &fields) {
+				data.processUsers(fields.vusers());
+				data.processChats(fields.vchats());
+				data.clearPinnedChats(nullptr);
+				data.applyDialogs(
+					nullptr,
+					fields.vmessages().v,
+					fields.vdialogs().v);
+				data.notifyPinnedDialogsOrderUpdated();
+			});
+		}
+	};
+	for (const auto &frame : frames) {
+		applyFrame(frame, DialogsCachePageType::Main);
+	}
+	for (const auto &frame : frames) {
+		applyFrame(frame, DialogsCachePageType::Pinned);
+	}
+	data.chatsListChanged(nullptr);
+}
 
 constexpr auto kStickersVersionTag = quint32(-1);
 constexpr auto kStickersSerializeVersion = 4;
@@ -104,6 +195,7 @@ enum { // Local Storage Keys
 	lskMediaLastPlaybackPositions = 0x1c, // no data
 	lskBotStorages = 0x1d, // data: PeerId botId
 	lskPrefs = 0x1e, // no data
+	lskDialogsCache = 0x1f, // no data
 };
 
 auto EmptyMessageDraftSources()
@@ -183,7 +275,8 @@ Account::Account(not_null<Main::Account*> owner, const QString &dataName)
 , _writeMapTimer([=] { writeMap(); })
 , _writePrefsTimer([=] { writePrefs(); })
 , _writeLocationsTimer([=] { writeLocations(); })
-, _writeSearchSuggestionsTimer([=] { writeSearchSuggestions(); }) {
+, _writeSearchSuggestionsTimer([=] { writeSearchSuggestions(); })
+, _writeDialogsCacheTimer([=] { writeDialogsCache(); }) {
 }
 
 Account::~Account() {
@@ -365,6 +458,7 @@ Account::ReadMapResult Account::readMapWith(
 	quint64 roundPlaceholderKey = 0;
 	quint64 inlineBotsDownloadsKey = 0;
 	quint64 mediaLastPlaybackPositionsKey = 0;
+	quint64 dialogsCacheKey = 0;
 	QByteArray webviewStorageTokenBots, webviewStorageTokenOther;
 	while (!map.stream.atEnd()) {
 		quint32 keyType;
@@ -486,6 +580,9 @@ Account::ReadMapResult Account::readMapWith(
 		case lskMediaLastPlaybackPositions: {
 			map.stream >> mediaLastPlaybackPositionsKey;
 		} break;
+		case lskDialogsCache: {
+			map.stream >> dialogsCacheKey;
+		} break;
 		case lskWebviewTokens: {
 			map.stream
 				>> webviewStorageTokenBots
@@ -545,6 +642,7 @@ Account::ReadMapResult Account::readMapWith(
 	_roundPlaceholderKey = roundPlaceholderKey;
 	_inlineBotsDownloadsKey = inlineBotsDownloadsKey;
 	_mediaLastPlaybackPositionsKey = mediaLastPlaybackPositionsKey;
+	_dialogsCacheKey = dialogsCacheKey;
 	_oldMapVersion = mapData.version;
 	_webviewStorageIdBots.token = webviewStorageTokenBots;
 	_webviewStorageIdOther.token = webviewStorageTokenOther;
@@ -666,6 +764,7 @@ void Account::writeMap() {
 	if (_roundPlaceholderKey) mapSize += sizeof(quint32) + sizeof(quint64);
 	if (_inlineBotsDownloadsKey) mapSize += sizeof(quint32) + sizeof(quint64);
 	if (_mediaLastPlaybackPositionsKey) mapSize += sizeof(quint32) + sizeof(quint64);
+	if (_dialogsCacheKey) mapSize += sizeof(quint32) + sizeof(quint64);
 	if (!_botStoragesMap.empty()) mapSize += sizeof(quint32) * 2 + _botStoragesMap.size() * sizeof(quint64) * 2;
 
 	EncryptedDescriptor mapData(mapSize);
@@ -752,6 +851,10 @@ void Account::writeMap() {
 		mapData.stream << quint32(lskMediaLastPlaybackPositions);
 		mapData.stream << quint64(_mediaLastPlaybackPositionsKey);
 	}
+	if (_dialogsCacheKey) {
+		mapData.stream << quint32(lskDialogsCache);
+		mapData.stream << quint64(_dialogsCacheKey);
+	}
 	if (!_botStoragesMap.empty()) {
 		mapData.stream << quint32(lskBotStorages) << quint32(_botStoragesMap.size());
 		for (const auto &[key, value] : _botStoragesMap) {
@@ -792,6 +895,8 @@ void Account::reset() {
 	_roundPlaceholderKey = 0;
 	_inlineBotsDownloadsKey = 0;
 	_mediaLastPlaybackPositionsKey = 0;
+	_dialogsCacheKey = 0;
+	_dialogsCachePages.clear();
 	_oldMapVersion = 0;
 	_fileLocations.clear();
 	_fileLocationPairs.clear();
@@ -3275,6 +3380,111 @@ void Account::readSearchSuggestions() {
 	} else {
 		DEBUG_LOG(("Suggestions: Could not read content."));
 	}
+}
+
+void Account::dialogsCacheAddPage(const MTPmessages_Dialogs &result) {
+	if (_dialogsCachePages.size() >= kDialogsCacheMaxPages) {
+		return;
+	}
+	auto frame = QByteArray(1, char(DialogsCachePageType::Main));
+	frame += SerializeMtpObject(result);
+	_dialogsCachePages.push_back(std::move(frame));
+}
+
+void Account::dialogsCacheAddPinned(const MTPmessages_PeerDialogs &result) {
+	if (_dialogsCachePages.size() >= kDialogsCacheMaxPages) {
+		return;
+	}
+	auto frame = QByteArray(1, char(DialogsCachePageType::Pinned));
+	frame += SerializeMtpObject(result);
+	_dialogsCachePages.push_back(std::move(frame));
+}
+
+void Account::dialogsCacheFinish() {
+	if (!_dialogsCachePages.empty()) {
+		writeDialogsCacheDelayed();
+	}
+}
+
+void Account::writeDialogsCacheDelayed() {
+	if (!_writeDialogsCacheTimer.isActive()) {
+		_writeDialogsCacheTimer.callOnce(kWriteDialogsCacheDelay);
+	}
+}
+
+void Account::writeDialogsCacheIfNeeded() {
+	if (_writeDialogsCacheTimer.isActive()) {
+		_writeDialogsCacheTimer.cancel();
+		writeDialogsCache();
+	}
+}
+
+void Account::writeDialogsCache() {
+	_writeDialogsCacheTimer.cancel();
+	if (_dialogsCachePages.empty()) {
+		if (_dialogsCacheKey) {
+			ClearKey(_dialogsCacheKey, _basePath);
+			_dialogsCacheKey = 0;
+			writeMapDelayed();
+		}
+		return;
+	}
+	if (!_dialogsCacheKey) {
+		_dialogsCacheKey = GenerateKey(_basePath);
+		writeMapQueued();
+	}
+	auto size = uint32(sizeof(quint32) * 2); // version + pages count.
+	for (const auto &page : _dialogsCachePages) {
+		size += Serialize::bytearraySize(page);
+	}
+	EncryptedDescriptor data(size);
+	data.stream << quint32(kDialogsCacheVersion);
+	data.stream << quint32(_dialogsCachePages.size());
+	for (const auto &page : _dialogsCachePages) {
+		data.stream << page;
+	}
+
+	FileWriteDescriptor file(_dialogsCacheKey, _basePath);
+	file.writeEncrypted(data, _localKey);
+
+	_dialogsCachePages.clear();
+}
+
+void Account::readDialogsCache() {
+	if (_dialogsCacheRead) {
+		return;
+	}
+	_dialogsCacheRead = true;
+	if (!_dialogsCacheKey || !_owner->sessionExists()) {
+		return;
+	}
+
+	FileReadDescriptor cache;
+	if (!ReadEncryptedFile(cache, _dialogsCacheKey, _basePath, _localKey)) {
+		ClearKey(_dialogsCacheKey, _basePath);
+		_dialogsCacheKey = 0;
+		writeMapDelayed();
+		return;
+	}
+
+	quint32 version = 0, count = 0;
+	cache.stream >> version >> count;
+	if (!CheckStreamStatus(cache.stream)
+		|| version != kDialogsCacheVersion
+		|| count > kDialogsCacheMaxPages) {
+		return;
+	}
+	auto frames = std::vector<QByteArray>();
+	frames.reserve(count);
+	for (auto i = 0u; i != count; ++i) {
+		auto frame = QByteArray();
+		cache.stream >> frame;
+		frames.push_back(std::move(frame));
+	}
+	if (!CheckStreamStatus(cache.stream)) {
+		return;
+	}
+	ApplyDialogsCacheFrames(&_owner->session(), frames);
 }
 
 void Account::writeSelf() {

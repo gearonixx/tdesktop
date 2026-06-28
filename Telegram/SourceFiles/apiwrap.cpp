@@ -915,6 +915,9 @@ void ApiWrap::requestMoreDialogs(Data::Folder *folder) {
 		MTP_long(hash)
 	)).done([=](const MTPmessages_Dialogs &result) {
 		const auto state = dialogsLoadState(folder);
+		if (!folder) {
+			_session->local().dialogsCacheAddPage(result);
+		}
 		const auto count = result.match([](
 				const MTPDmessages_dialogsNotModified &) {
 			LOG(("API Error: not-modified received for requested dialogs."));
@@ -1064,6 +1067,7 @@ void ApiWrap::dialogsLoadFinish(Data::Folder *folder) {
 		notify();
 	} else {
 		_dialogsLoadState = nullptr;
+		_session->local().dialogsCacheFinish();
 		notify();
 	}
 }
@@ -1084,6 +1088,9 @@ void ApiWrap::requestPinnedDialogs(Data::Folder *folder) {
 	state->pinnedRequestId = request(MTPmessages_GetPinnedDialogs(
 		MTP_int(folder ? folder->id() : 0)
 	)).done([=](const MTPmessages_PeerDialogs &result) {
+		if (!folder) {
+			_session->local().dialogsCacheAddPinned(result);
+		}
 		finalize();
 		result.match([&](const MTPDmessages_peerDialogs &data) {
 			_session->data().processUsers(data.vusers());
