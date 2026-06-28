@@ -523,6 +523,15 @@ public:
 		const QVector<MTPDialog> &dialogs,
 		std::optional<int> count = std::nullopt);
 
+	// Same as applyDialogs, but applies the dialogs in small batches
+	// posted to the main loop, so a page of hundreds of chats doesn't
+	// block the UI thread in one go. Use for bulk dialog list pages.
+	void applyDialogsChunked(
+		Folder *requestFolder,
+		const QVector<MTPMessage> &messages,
+		const QVector<MTPDialog> &dialogs,
+		std::optional<int> count = std::nullopt);
+
 	[[nodiscard]] bool pinnedCanPin(not_null<Dialogs::Entry*> entry) const;
 	[[nodiscard]] bool pinnedCanPin(
 		FilterId filterId,
@@ -1043,6 +1052,7 @@ private:
 	void applyDialog(
 		Folder *requestFolder,
 		const MTPDdialogFolder &data);
+	void applyDialogsChunk();
 
 	const Messages *messagesList(PeerId peerId) const;
 	not_null<Messages*> messagesListForInsert(PeerId peerId);
@@ -1178,6 +1188,12 @@ private:
 	rpl::variable<int> _groupFreeTranscribeLevel;
 	rpl::event_stream<Folder*> _chatsListLoadedEvents;
 	rpl::event_stream<Folder*> _chatsListChanged;
+	struct PendingDialogApply {
+		Folder *requestFolder = nullptr;
+		MTPDialog dialog;
+	};
+	std::deque<PendingDialogApply> _dialogsToApplyChunked;
+	bool _dialogsApplyChunkScheduled = false;
 	rpl::event_stream<not_null<UserData*>> _userIsBotChanges;
 	rpl::event_stream<not_null<PeerData*>> _botCommandsChanges;
 	rpl::event_stream<ItemVisibilityQuery> _itemVisibilityQueries;
