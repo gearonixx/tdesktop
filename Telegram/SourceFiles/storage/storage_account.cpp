@@ -34,6 +34,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/settings_recent_searches.h"
 #include "data/components/top_peers.h"
 #include "data/stickers/data_stickers.h"
+#include "data/data_chat_filters.h"
 #include "data/data_session.h"
 #include "data/data_document.h"
 #include "data/data_user.h"
@@ -53,7 +54,10 @@ constexpr auto kWriteSearchSuggestionsDelay = 5 * crl::time(1000);
 constexpr auto kWriteDialogsCacheDelay = 2 * crl::time(1000);
 constexpr auto kMaxSavedPlaybackPositions = 256;
 
-constexpr auto kDialogsCacheVersion = 1;
+// v2 adds a trailing folders section (the cached messages.getDialogFilters
+// response) so the first paint is already foldered instead of flashing the
+// flat all-chats list for ~2s. Bumping the version self-invalidates any v1 blob.
+constexpr auto kDialogsCacheVersion = 2;
 // Keep the cache small and the (synchronous) write fast: a handful of pages is
 // the visible top of the list, which is all that's needed for instant paint;
 // the rest reconciles from the network. Bounds the file even if re-syncs append.
@@ -62,6 +66,7 @@ constexpr auto kDialogsCacheMaxPages = 8;
 enum class DialogsCachePageType : quint8 {
 	Main = 0,
 	Pinned = 1,
+	Filters = 2,
 };
 
 template <typename Type>
@@ -119,7 +124,7 @@ void ApplyDialogsCacheFrames(
 					fields.vmessages().v,
 					fields.vdialogs().v);
 			});
-		} else {
+		} else if (wanted == DialogsCachePageType::Pinned) {
 			const auto parsed = DeserializeMtpObject<MTPmessages_PeerDialogs>(
 				payload);
 			if (!parsed) {
@@ -135,6 +140,20 @@ void ApplyDialogsCacheFrames(
 					fields.vdialogs().v);
 				data.notifyPinnedDialogsOrderUpdated();
 			});
+		} else if (wanted == DialogsCachePageType::Filters) {
+			const auto parsed = DeserializeMtpObject<MTPmessages_DialogFilters>(
+				payload);
+			if (!parsed) {
+				return;
+			}
+			parsed->match([&](const MTPDmessages_dialogFilters &fields) {
+				// Folders last: setPreloaded -> received -> applyChange scans the
+				// main list assembled above into each folder, so the first paint
+				// is already foldered (no flat-list flash before getDialogFilters).
+				data.chatsFilters().setPreloaded(
+					fields.vfilters().v,
+					fields.is_tags_enabled());
+			});
 		}
 	};
 	for (const auto &frame : frames) {
@@ -142,6 +161,9 @@ void ApplyDialogsCacheFrames(
 	}
 	for (const auto &frame : frames) {
 		applyFrame(frame, DialogsCachePageType::Pinned);
+	}
+	for (const auto &frame : frames) {
+		applyFrame(frame, DialogsCachePageType::Filters);
 	}
 	data.chatsListChanged(nullptr);
 	LOG(("DialogsCache: replay done, chat list now has %1 entries."
@@ -907,6 +929,7 @@ void Account::reset() {
 	_mediaLastPlaybackPositionsKey = 0;
 	_dialogsCacheKey = 0;
 	_dialogsCachePages.clear();
+	_dialogsCacheFilters.clear();
 	_oldMapVersion = 0;
 	_fileLocations.clear();
 	_fileLocationPairs.clear();
@@ -3415,6 +3438,19 @@ void Account::dialogsCacheAddPinned(const MTPmessages_PeerDialogs &result) {
 	writeDialogsCacheDelayed();
 }
 
+void Account::dialogsCacheSetFilters(const MTPmessages_DialogFilters &result) {
+	// One trailing folders frame (replaces any previous): the serialized
+	// getDialogFilters response, replayed after the dialog pages so the next
+	// cold start paints the foldered view immediately. See report 13.
+	auto frame = QByteArray(1, char(DialogsCachePageType::Filters));
+	frame += SerializeMtpObject(result);
+	if (_dialogsCacheFilters == frame) {
+		return;
+	}
+	_dialogsCacheFilters = std::move(frame);
+	writeDialogsCacheDelayed();
+}
+
 void Account::dialogsCacheFinish() {
 	LOG(("DialogsCache: sync finished, %1 pages pending."
 		).arg(_dialogsCachePages.size()));
@@ -3441,7 +3477,7 @@ void Account::writeDialogsCacheIfNeeded() {
 
 void Account::writeDialogsCache() {
 	_writeDialogsCacheTimer.cancel();
-	if (_dialogsCachePages.empty()) {
+	if (_dialogsCachePages.empty() && _dialogsCacheFilters.isEmpty()) {
 		if (_dialogsCacheKey) {
 			ClearKey(_dialogsCacheKey, _basePath);
 			_dialogsCacheKey = 0;
@@ -3465,6 +3501,7 @@ void Account::writeDialogsCache() {
 	for (const auto &page : _dialogsCachePages) {
 		size += Serialize::bytearraySize(page);
 	}
+	size += Serialize::bytearraySize(_dialogsCacheFilters);
 	LOG(("DialogsCache: writing %1 pages, %2 bytes (layer %3)."
 		).arg(_dialogsCachePages.size()).arg(size).arg(MTP::details::kCurrentLayer));
 	EncryptedDescriptor data(size);
@@ -3474,6 +3511,9 @@ void Account::writeDialogsCache() {
 	for (const auto &page : _dialogsCachePages) {
 		data.stream << page;
 	}
+	// v2 trailing section: the folders frame (empty QByteArray if not captured
+	// yet). Read back symmetrically in readDialogsCache.
+	data.stream << _dialogsCacheFilters;
 
 	// Synchronous write: the file must land on disk before we return, so it
 	// survives an ungraceful exit (e.g. SIGINT). An async write would sit in
@@ -3518,18 +3558,24 @@ void Account::readDialogsCache() {
 		return;
 	}
 	auto frames = std::vector<QByteArray>();
-	frames.reserve(count);
+	frames.reserve(count + 1);
 	for (auto i = 0u; i != count; ++i) {
 		auto frame = QByteArray();
 		cache.stream >> frame;
 		frames.push_back(std::move(frame));
 	}
+	auto filtersFrame = QByteArray();
+	cache.stream >> filtersFrame; // v2 trailing folders section (may be empty).
 	if (!CheckStreamStatus(cache.stream)) {
 		LOG(("DialogsCache: truncated payload."));
 		return;
 	}
-	LOG(("DialogsCache: read %1 pages, replaying into the chat list."
-		).arg(count));
+	const auto hasFilters = !filtersFrame.isEmpty();
+	if (hasFilters) {
+		frames.push_back(std::move(filtersFrame));
+	}
+	LOG(("DialogsCache: read %1 pages, %2 folders frame, replaying."
+		).arg(count).arg(hasFilters ? 1 : 0));
 	ApplyDialogsCacheFrames(&_owner->session(), frames);
 }
 

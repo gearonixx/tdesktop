@@ -165,6 +165,7 @@ public:
 	// the next launch, so the chat list shows up before any network round-trip.
 	void dialogsCacheAddPage(const MTPmessages_Dialogs &result);
 	void dialogsCacheAddPinned(const MTPmessages_PeerDialogs &result);
+	void dialogsCacheSetFilters(const MTPmessages_DialogFilters &result);
 	void dialogsCacheFinish();
 	void writeDialogsCache();
 	void writeDialogsCacheDelayed();
@@ -390,6 +391,7 @@ private:
 
 	std::vector<std::pair<DocumentId, crl::time>> _mediaLastPlaybackPosition;
 	std::vector<QByteArray> _dialogsCachePages;
+	QByteArray _dialogsCacheFilters;
 
 	Webview::StorageId _webviewStorageIdBots;
 	Webview::StorageId _webviewStorageIdOther;

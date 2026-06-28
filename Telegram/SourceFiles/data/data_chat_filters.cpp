@@ -23,6 +23,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/chat/more_chats_bar.h"
 #include "main/main_session.h"
 #include "main/main_app_config.h"
+#include "storage/storage_account.h"
 #include "apiwrap.h"
 
 namespace Data {
@@ -443,6 +444,10 @@ void ChatFilters::load(bool force) {
 	)).done([=](const MTPmessages_DialogFilters &result) {
 		_tagsEnabled = result.data().is_tags_enabled();
 		received(result.data().vfilters().v);
+		// Persist the folders next to the dialogs cache so the next cold start
+		// paints the foldered view immediately instead of flashing the flat
+		// all-chats list. See Storage::Account::dialogsCacheSetFilters / report 13.
+		_owner->session().local().dialogsCacheSetFilters(result);
 		_loadRequestId = 0;
 	}).fail([=] {
 		_loadRequestId = 0;
