@@ -50,11 +50,14 @@ using Database = Cache::Database;
 
 constexpr auto kDelayedWriteTimeout = crl::time(1000);
 constexpr auto kWriteSearchSuggestionsDelay = 5 * crl::time(1000);
-constexpr auto kWriteDialogsCacheDelay = 5 * crl::time(1000);
+constexpr auto kWriteDialogsCacheDelay = 2 * crl::time(1000);
 constexpr auto kMaxSavedPlaybackPositions = 256;
 
 constexpr auto kDialogsCacheVersion = 1;
-constexpr auto kDialogsCacheMaxPages = 32;
+// Keep the cache small and the (synchronous) write fast: a handful of pages is
+// the visible top of the list, which is all that's needed for instant paint;
+// the rest reconciles from the network. Bounds the file even if re-syncs append.
+constexpr auto kDialogsCacheMaxPages = 8;
 
 enum class DialogsCachePageType : quint8 {
 	Main = 0,
@@ -141,6 +144,8 @@ void ApplyDialogsCacheFrames(
 		applyFrame(frame, DialogsCachePageType::Pinned);
 	}
 	data.chatsListChanged(nullptr);
+	LOG(("DialogsCache: replay done, chat list now has %1 entries."
+		).arg(data.chatsList()->indexed()->size()));
 }
 
 constexpr auto kStickersVersionTag = quint32(-1);
@@ -364,6 +369,7 @@ base::flat_set<QString> Account::collectGoodNames() const {
 		_roundPlaceholderKey,
 		_inlineBotsDownloadsKey,
 		_mediaLastPlaybackPositionsKey,
+		_dialogsCacheKey,
 	};
 	auto result = base::flat_set<QString>{
 		"map0",
@@ -706,7 +712,11 @@ void Account::writeMap() {
 		QDir().mkpath(_basePath);
 	}
 
-	FileWriteDescriptor map(u"map"_q, _basePath);
+	// Synchronous map write: the key->file index must survive an ungraceful
+	// exit (SIGINT) too, otherwise a key can persist whose file (or vice
+	// versa) was lost, leaving a dangling reference. The map is tiny so the
+	// synchronous cost is negligible.
+	FileWriteDescriptor map(u"map"_q, _basePath, /*sync=*/true);
 	map.writeData(QByteArray());
 	map.writeData(QByteArray());
 
@@ -3389,6 +3399,10 @@ void Account::dialogsCacheAddPage(const MTPmessages_Dialogs &result) {
 	auto frame = QByteArray(1, char(DialogsCachePageType::Main));
 	frame += SerializeMtpObject(result);
 	_dialogsCachePages.push_back(std::move(frame));
+	// Persist incrementally (debounced): a sync that never fully "finishes"
+	// (big account, or the app closed mid-sync) must still cache the pages
+	// loaded so far, otherwise nothing is ever written.
+	writeDialogsCacheDelayed();
 }
 
 void Account::dialogsCacheAddPinned(const MTPmessages_PeerDialogs &result) {
@@ -3398,11 +3412,15 @@ void Account::dialogsCacheAddPinned(const MTPmessages_PeerDialogs &result) {
 	auto frame = QByteArray(1, char(DialogsCachePageType::Pinned));
 	frame += SerializeMtpObject(result);
 	_dialogsCachePages.push_back(std::move(frame));
+	writeDialogsCacheDelayed();
 }
 
 void Account::dialogsCacheFinish() {
+	LOG(("DialogsCache: sync finished, %1 pages pending."
+		).arg(_dialogsCachePages.size()));
+	// Full sync done — persist the final, complete snapshot right away.
 	if (!_dialogsCachePages.empty()) {
-		writeDialogsCacheDelayed();
+		writeDialogsCache();
 	}
 }
 
@@ -3413,8 +3431,10 @@ void Account::writeDialogsCacheDelayed() {
 }
 
 void Account::writeDialogsCacheIfNeeded() {
-	if (_writeDialogsCacheTimer.isActive()) {
-		_writeDialogsCacheTimer.cancel();
+	// Unconditional flush (on shutdown): persist whatever pages we have, even
+	// if the debounce timer hasn't fired and the sync never fully finished.
+	_writeDialogsCacheTimer.cancel();
+	if (!_dialogsCachePages.empty()) {
 		writeDialogsCache();
 	}
 }
@@ -3431,23 +3451,39 @@ void Account::writeDialogsCache() {
 	}
 	if (!_dialogsCacheKey) {
 		_dialogsCacheKey = GenerateKey(_basePath);
-		writeMapQueued();
+		// Persist the key->file index right now, synchronously, so the new key
+		// and its (synchronously written) file always land together and survive
+		// an ungraceful exit. Deferring via writeMapQueued() loses the key on
+		// SIGINT while the file is already on disk (dangling reference).
+		_mapChanged = true;
+		writeMap();
 	}
-	auto size = uint32(sizeof(quint32) * 2); // version + pages count.
+	// Header: format version + TL layer (serialized MTP objects depend on the
+	// scheme layer, so a client upgrade that changes the layer invalidates the
+	// blob) + page count.
+	auto size = uint32(sizeof(quint32) * 2 + sizeof(qint32));
 	for (const auto &page : _dialogsCachePages) {
 		size += Serialize::bytearraySize(page);
 	}
+	LOG(("DialogsCache: writing %1 pages, %2 bytes (layer %3)."
+		).arg(_dialogsCachePages.size()).arg(size).arg(MTP::details::kCurrentLayer));
 	EncryptedDescriptor data(size);
 	data.stream << quint32(kDialogsCacheVersion);
+	data.stream << qint32(MTP::details::kCurrentLayer);
 	data.stream << quint32(_dialogsCachePages.size());
 	for (const auto &page : _dialogsCachePages) {
 		data.stream << page;
 	}
 
-	FileWriteDescriptor file(_dialogsCacheKey, _basePath);
+	// Synchronous write: the file must land on disk before we return, so it
+	// survives an ungraceful exit (e.g. SIGINT). An async write would sit in
+	// the background writer queue while the (tiny) map key already committed,
+	// leaving a key that points at a missing file -> "file read failed".
+	FileWriteDescriptor file(_dialogsCacheKey, _basePath, /*sync=*/true);
 	file.writeEncrypted(data, _localKey);
 
-	_dialogsCachePages.clear();
+	// Do NOT clear _dialogsCachePages: keep them so subsequent incremental
+	// writes and the on-shutdown flush always persist the full accumulated set.
 }
 
 void Account::readDialogsCache() {
@@ -3456,11 +3492,14 @@ void Account::readDialogsCache() {
 	}
 	_dialogsCacheRead = true;
 	if (!_dialogsCacheKey || !_owner->sessionExists()) {
+		LOG(("DialogsCache: nothing to read (key=%1, session=%2)."
+			).arg(_dialogsCacheKey).arg(_owner->sessionExists() ? 1 : 0));
 		return;
 	}
 
 	FileReadDescriptor cache;
 	if (!ReadEncryptedFile(cache, _dialogsCacheKey, _basePath, _localKey)) {
+		LOG(("DialogsCache: file read failed, dropping key."));
 		ClearKey(_dialogsCacheKey, _basePath);
 		_dialogsCacheKey = 0;
 		writeMapDelayed();
@@ -3468,10 +3507,14 @@ void Account::readDialogsCache() {
 	}
 
 	quint32 version = 0, count = 0;
-	cache.stream >> version >> count;
+	qint32 layer = 0;
+	cache.stream >> version >> layer >> count;
 	if (!CheckStreamStatus(cache.stream)
 		|| version != kDialogsCacheVersion
+		|| layer != MTP::details::kCurrentLayer
 		|| count > kDialogsCacheMaxPages) {
+		LOG(("DialogsCache: bad header (version=%1, layer=%2, count=%3)."
+			).arg(version).arg(layer).arg(count));
 		return;
 	}
 	auto frames = std::vector<QByteArray>();
@@ -3482,8 +3525,11 @@ void Account::readDialogsCache() {
 		frames.push_back(std::move(frame));
 	}
 	if (!CheckStreamStatus(cache.stream)) {
+		LOG(("DialogsCache: truncated payload."));
 		return;
 	}
+	LOG(("DialogsCache: read %1 pages, replaying into the chat list."
+		).arg(count));
 	ApplyDialogsCacheFrames(&_owner->session(), frames);
 }
 
