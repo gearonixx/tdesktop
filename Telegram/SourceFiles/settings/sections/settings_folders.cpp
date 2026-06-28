@@ -1179,6 +1179,8 @@ private:
 	std::shared_ptr<FoldersState> _state;
 	rpl::event_stream<> _showFinished;
 
+	object_ptr<Ui::VerticalLayout> _content = { nullptr };
+
 };
 
 Folders::Folders(
@@ -1193,6 +1195,7 @@ Folders::~Folders() {
 	if (!Core::Quitting() && _state->save) {
 		_state->save(nullptr, nullptr);
 	}
+	_content.destroy();
 }
 
 rpl::producer<QString> Folders::title() {
@@ -1202,7 +1205,8 @@ rpl::producer<QString> Folders::title() {
 void Folders::setupContent() {
 	controller()->session().data().chatsFilters().requestSuggested();
 
-	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
+	_content = object_ptr<Ui::VerticalLayout>(this);
+	const auto content = _content.data();
 	const auto state = _state;
 
 	const SectionBuildMethod buildMethod = [state](
