@@ -63,10 +63,9 @@ void PinnedList::setPinned(Key key, bool pinned) {
 			}
 		}
 	} else if (const auto it = ranges::find(_data, key); it != end(_data)) {
-		const auto index = int(it - begin(_data));
 		_data.erase(it);
 		key.entry()->cachePinnedIndex(_filterId, 0);
-		for (auto i = index, count = int(size(_data)); i != count; ++i) {
+		for (auto i = 0; i < int(size(_data)); ++i) {
 			_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
 		}
 	}
