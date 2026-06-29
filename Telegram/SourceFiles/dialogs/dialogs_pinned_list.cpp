@@ -56,9 +56,14 @@ void PinnedList::setPinned(Key key, bool pinned) {
 	if (pinned) {
 		const int position = addPinnedGetPosition(key);
 		if (position) {
-			const auto begin = _data.begin();
-			std::rotate(begin, begin + position, begin + position + 1);
-			for (auto i = 0; i != position + 1; ++i) {
+			const auto from = _data.begin();
+			std::rotate(from, from + position, from + position + 1);
+			// cachePinnedIndex() fires synchronous notifications that can
+			// re-enter setPinned() and mutate _data underneath us. The loop
+			// invariant is purely positional (_data[i] must have pinned index
+			// i + 1), so re-read the live size each iteration instead of
+			// caching a count that a re-entrant erase could make stale.
+			for (auto i = 0; i <= position && i < int(_data.size()); ++i) {
 				_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
 			}
 		}
@@ -66,7 +71,12 @@ void PinnedList::setPinned(Key key, bool pinned) {
 		const auto index = int(it - begin(_data));
 		_data.erase(it);
 		key.entry()->cachePinnedIndex(_filterId, 0);
-		for (auto i = index, count = int(size(_data)); i != count; ++i) {
+		// cachePinnedIndex() can re-enter setPinned() and erase further
+		// elements (e.g. while a chat folder is being removed, every pinned
+		// chat is torn down in turn). Re-read _data.size() each iteration so
+		// the loop never indexes past a vector that shrank underneath it, and
+		// so removed entries are never restamped with a stale pinned index.
+		for (auto i = index; i < int(_data.size()); ++i) {
 			_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
 		}
 	}
