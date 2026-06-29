@@ -54,11 +54,11 @@ void PinnedList::setPinned(Key key, bool pinned) {
 	Expects(key.entry()->folderKnown() || _filterId != 0);
 
 	if (pinned) {
-		const int position = addPinnedGetPosition(key);
-		if (position) {
+		const auto position = addPinnedGetPosition(key);
+		if (position > 0 && position < int(_data.size())) {
 			const auto begin = _data.begin();
 			std::rotate(begin, begin + position, begin + position + 1);
-			for (auto i = 0; i != position + 1; ++i) {
+			for (auto i = 0; i <= position && i < int(_data.size()); ++i) {
 				_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
 			}
 		}
@@ -66,7 +66,7 @@ void PinnedList::setPinned(Key key, bool pinned) {
 		const auto index = int(it - begin(_data));
 		_data.erase(it);
 		key.entry()->cachePinnedIndex(_filterId, 0);
-		for (auto i = index, count = int(size(_data)); i != count; ++i) {
+		for (auto i = index; i < int(_data.size()); ++i) {
 			_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
 		}
 	}
