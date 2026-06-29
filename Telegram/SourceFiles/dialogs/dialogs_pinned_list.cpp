@@ -54,21 +54,37 @@ void PinnedList::setPinned(Key key, bool pinned) {
 	Expects(key.entry()->folderKnown() || _filterId != 0);
 
 	if (pinned) {
-		const int position = addPinnedGetPosition(key);
-		if (position) {
+		const auto position = addPinnedGetPosition(key);
+		// addPinnedGetPosition() and cachePinnedIndices() below notify entries,
+		// which may synchronously re-enter PinnedList and mutate _data (see the
+		// note in cachePinnedIndices()), so validate against the live vector
+		// before rotating it.
+		if (position > 0 && position < int(_data.size())) {
 			const auto begin = _data.begin();
 			std::rotate(begin, begin + position, begin + position + 1);
-			for (auto i = 0; i != position + 1; ++i) {
-				_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
-			}
+			cachePinnedIndices(0, position + 1);
 		}
 	} else if (const auto it = ranges::find(_data, key); it != end(_data)) {
 		const auto index = int(it - begin(_data));
 		_data.erase(it);
 		key.entry()->cachePinnedIndex(_filterId, 0);
-		for (auto i = index, count = int(size(_data)); i != count; ++i) {
-			_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
-		}
+		cachePinnedIndices(index, int(_data.size()));
+	}
+}
+
+void PinnedList::cachePinnedIndices(int from, int till) {
+	// cachePinnedIndex() notifies the entry, and that notification can
+	// synchronously re-enter PinnedList and mutate _data. For example, while
+	// several chat folders are removed at once, the chain
+	//   cachePinnedIndex -> Entry::pinnedIndexChanged
+	//     -> updateChatListSortPosition -> setChatListExistence
+	//     -> Data::Session::refreshChatListEntry -> Data::Session::setChatPinned
+	// erases more entries from this same list. Re-read the live size on every
+	// step and only touch slots that still exist, so a vector that shrank under
+	// us can never be indexed out of bounds; any tail already renumbered by the
+	// nested call is corrected here idempotently.
+	for (auto i = from; i < till && i < int(_data.size()); ++i) {
+		_data[i].entry()->cachePinnedIndex(_filterId, i + 1);
 	}
 }
 

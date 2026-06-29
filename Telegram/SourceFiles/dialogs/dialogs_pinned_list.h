@@ -53,6 +53,7 @@ public:
 private:
 	int addPinnedGetPosition(Key key);
 	void applyLimit(int limit);
+	void cachePinnedIndices(int from, int till);
 
 	FilterId _filterId = 0;
 	int _limit = 0;
