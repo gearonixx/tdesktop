@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #pragma once
 
+#include "base/timer.h"
 #include "base/unique_qptr.h"
 #include "ui/effects/animations.h"
 
@@ -70,6 +71,7 @@ private:
 	History *_next = nullptr;
 
 	base::unique_qptr<QObject> _filter;
+	base::Timer _idleFinish;
 	Ui::Animations::Simple _retract;
 	Ui::Animations::Simple _expand;
 
@@ -85,6 +87,7 @@ private:
 	bool _reached = false;
 	bool _gaveUp = false;
 	bool _swallowMomentum = false;
+	bool _jumpPending = false;
 
 };
 

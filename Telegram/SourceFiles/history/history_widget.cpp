@@ -7547,6 +7547,10 @@ void HistoryWidget::updateHistoryGeometry(
 			{ 0, subsectionTabsTop, width(), areaHeight });
 	}
 
+	// Drop any stranded swipe-next-channel bottom inset before laying out, so a
+	// new message / resize can't position the view into reserved empty space.
+	_pullToNext->updateGeometry();
+
 	updateListSize();
 	_updateHistoryGeometryRequired = false;
 

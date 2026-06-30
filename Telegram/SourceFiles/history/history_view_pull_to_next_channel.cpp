@@ -49,6 +49,11 @@ constexpr auto kRetractDuration = crl::time(250);
 constexpr auto kExpandDuration = crl::time(250);
 constexpr auto kBounceDuration = crl::time(400);
 
+// Some Wayland touchpad setups never deliver the terminating wheel phase
+// (ScrollEnd/ScrollMomentum). Finalize the gesture this long after the last
+// wheel delta so the reserved bottom inset can't be stranded.
+constexpr auto kIdleFinish = crl::time(150);
+
 [[nodiscard]] History *FindNextUnreadChannel(
 		not_null<Window::SessionController*> controller,
 		not_null<PeerData*> current) {
@@ -571,6 +576,14 @@ PullToNextChannel::PullToNextChannel(
 , _controller(controller)
 , _indicator(base::make_unique_q<Indicator>(scroll, controller->chatStyle()))
 , _hint(base::make_unique_q<HintOverlay>(parent)) {
+	_idleFinish.setCallback([this] {
+		if (_engaged) {
+			// The terminating wheel phase never arrived (see kIdleFinish):
+			// treat the lull as a finger lift and finalize the gesture so the
+			// reserved inset retracts (or jumps) instead of staying stranded.
+			(void)release();
+		}
+	});
 }
 
 PullToNextChannel::~PullToNextChannel() = default;
@@ -625,7 +638,16 @@ bool PullToNextChannel::processWheel(not_null<QWheelEvent*> e) {
 		return false;
 	}
 	const auto delta = Ui::ScrollDeltaF(e);
-	return applyDelta(delta.x(), delta.y());
+	const auto result = applyDelta(delta.x(), delta.y());
+	if (_engaged) {
+		// Restart the watchdog on every delta; if deltas stop arriving without
+		// a ScrollEnd/ScrollMomentum (some Wayland touchpads), the timer fires
+		// and finalizes the gesture so the bottom inset can't be stranded.
+		_idleFinish.callOnce(kIdleFinish);
+	} else {
+		_idleFinish.cancel();
+	}
+	return result;
 }
 
 bool PullToNextChannel::applyDelta(float64 deltaX, float64 deltaY) {
@@ -690,6 +712,10 @@ bool PullToNextChannel::release() {
 	_swallowMomentum = true;
 	clearState();
 	if (ready) {
+		// The expanded inset stays visible as the "jumping" indicator until the
+		// next channel is shown (which resets us); guard it from the idle
+		// self-heal in updateGeometry() meanwhile.
+		_jumpPending = true;
 		crl::on_main(_parent.get(), [=] { jumpWhenReady(next, 0); });
 	} else {
 		startRetract(fromAccumulated, next);
@@ -727,11 +753,19 @@ void PullToNextChannel::startExpand(bool ready) {
 }
 
 void PullToNextChannel::applyShift(int shift) {
-	if (_inner && _inner->pullBottomInset() != shift) {
-		_inner->setPullBottomInset(shift);
-		_scroll->scrollToY(_scroll->scrollTopMax());
-		_inner->update();
+	if (!_inner || _inner->pullBottomInset() == shift) {
+		return;
 	}
+	const auto wasAtBottom = (_scroll->scrollTop() >= _scroll->scrollTopMax());
+	_inner->setPullBottomInset(shift);
+	// Pin the view to the bottom only while the pull is actually live (being
+	// dragged, retracting, or held during a pending jump). Otherwise a stray
+	// render or a momentum/animation tick fired after the gesture has ended
+	// would yank the chat down into the reserved space.
+	if (wasAtBottom && (_engaged || _retract.animating() || _jumpPending)) {
+		_scroll->scrollToY(_scroll->scrollTopMax());
+	}
+	_inner->update();
 }
 
 void PullToNextChannel::startRetract(float64 fromAccumulated, History *next) {
@@ -752,6 +786,7 @@ void PullToNextChannel::startRetract(float64 fromAccumulated, History *next) {
 }
 
 void PullToNextChannel::clearState() {
+	_idleFinish.cancel();
 	_expand.stop();
 	_accumulated = 0.;
 	_offset = 0.;
@@ -766,6 +801,7 @@ void PullToNextChannel::clearState() {
 void PullToNextChannel::reset() {
 	_retract.stop();
 	_swallowMomentum = false;
+	_jumpPending = false;
 	clearState();
 	applyShift(0);
 	_indicator->hideNow();
@@ -773,6 +809,21 @@ void PullToNextChannel::reset() {
 }
 
 void PullToNextChannel::updateGeometry() {
+	// Self-heal: the reserved bottom inset must never survive into the idle
+	// state. If the gesture is over (not dragging, not animating, not jumping)
+	// drop it here. This covers cases where the terminating wheel phase
+	// (ScrollEnd/ScrollMomentum) is never delivered - e.g. some Wayland touchpad
+	// setups - which would otherwise strand the inset and let the chat scroll
+	// into empty space below the last message.
+	if (!_engaged
+		&& !_jumpPending
+		&& !_retract.animating()
+		&& !_expand.animating()
+		&& _inner
+		&& _inner->pullBottomInset() != 0) {
+		applyShift(0);
+	}
+
 	const auto height = st::historyPullNextMaxHeight;
 	_indicator->setGeometry(
 		0,
