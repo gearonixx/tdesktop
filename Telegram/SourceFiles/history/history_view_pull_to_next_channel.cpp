@@ -588,12 +588,17 @@ PullToNextChannel::PullToNextChannel(
 		finalizeIfStranded();
 	});
 
-	// Disable the raw QScroller bottom overshoot on the history list: without
-	// this the list rubber-bands into empty space below the last message (the
-	// physics commit only shrinks that overshoot to ~20% of the viewport, it
-	// doesn't remove it). The pull-to-next-channel gesture owns the bottom
-	// affordance instead. Top overshoot is left at its default (allowTop=null).
-	_scroll->setOverscrollEdges(nullptr, [] { return false; });
+	// Disable the raw QScroller overshoot on the history list. Without this the
+	// list rubber-bands into empty space below the last message (the physics
+	// commit only shrinks that overshoot to ~20% of the viewport, it doesn't
+	// remove it). Both edges are disabled on purpose: QScroller exposes a single
+	// VerticalOvershootPolicy, so a mixed (top-on / bottom-off) setup forces
+	// ScrollArea to re-apply scroller properties on every scroll-direction flip
+	// (updateOverscrollByDirection) - which, mid-fling on a touchpad, thrashes
+	// the live QScroller and makes the scrollbar and messages jump. Disabling
+	// both edges resolves to OvershootAlwaysOff once and never re-applies, and
+	// matches official tdesktop (which has no history bounce at all).
+	_scroll->setOverscrollEdges([] { return false; }, [] { return false; });
 }
 
 PullToNextChannel::~PullToNextChannel() = default;

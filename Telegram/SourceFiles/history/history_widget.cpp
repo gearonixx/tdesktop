@@ -209,6 +209,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <QtGui/QWindow>
 #include <QtCore/QMimeData>
+#include <QtWidgets/QScroller>
 
 namespace {
 
@@ -10460,6 +10461,15 @@ void HistoryWidget::synteticScrollToY(int y) {
 	if (_scroll->scrollTop() == y) {
 		visibleAreaUpdated();
 	} else {
+		// A programmatic reposition (most notably compensating for older
+		// messages prepended during a scroll-up preload) must take over from an
+		// active touchpad QScroller fling. Otherwise QScroller keeps driving the
+		// scrollbar toward its now-stale target and fights this setValue, which
+		// makes the scrollbar flicker on touchpad scroll-up (common wheel has no
+		// QScroller, so it never fights). Stop the scroller so this wins.
+		if (QScroller::hasScroller(_scroll.data())) {
+			QScroller::scroller(_scroll.data())->stop();
+		}
 		_scroll->scrollToY(y);
 	}
 	_synteticScrollEvent = false;
