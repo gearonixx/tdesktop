@@ -4622,6 +4622,19 @@ void HistoryWidget::visibleAreaUpdated() {
 	if (_list && !_scroll->isHidden()) {
 		const auto scrollTop = _scroll->scrollTop();
 		const auto scrollBottom = scrollTop + _scroll->height();
+		// The gap: does the ScrollArea let us rest past the real content?
+		// expectedMax is where the last pixel of content aligns with the
+		// viewport bottom; if scrollTopMax exceeds it (stale after a viewport
+		// height change) or scrollTop is beyond it, we're in dead space.
+		const auto stMax = _scroll->scrollTopMax();
+		const auto expectedMax = _list->height() - _scroll->height();
+		if (stMax != expectedMax || scrollTop > expectedMax) {
+			LOG(("GAP[scroll]: scrollTop=%1 scrollTopMax=%2 scrollH=%3 listH=%4 "
+				"expectedMax=%5 staleBy=%6 pastContentBy=%7"
+				).arg(scrollTop).arg(stMax).arg(_scroll->height()
+				).arg(_list->height()).arg(expectedMax).arg(stMax - expectedMax
+				).arg(scrollTop - expectedMax));
+		}
 		_list->visibleAreaUpdated(scrollTop, scrollBottom);
 		controller()->floatPlayerAreaUpdated();
 		session().data().itemVisibilitiesUpdated();
@@ -7573,6 +7586,11 @@ void HistoryWidget::updateHistoryGeometry(
 	}
 	const auto toY = std::clamp(newScrollTop, 0, _scroll->scrollTopMax());
 	synteticScrollToY(toY);
+	LOG(("GAP[widget]: updateHistoryGeometry scrollH=%1 innerH=%2 "
+		"scrollTopMax=%3 toY=%4 wasAtBottom=%5 listScrollTop=%6"
+		).arg(_scroll->height()).arg(_list ? _list->height() : -1
+		).arg(_scroll->scrollTopMax()).arg(toY).arg(Logs::b(wasAtBottom)
+		).arg(_list ? _list->historyScrollTop() : -1));
 	if (initial && _showAtMsgId) {
 		const auto timestamp = base::take(_showAtMsgParams.videoTimestamp);
 		if (timestamp.has_value()) {

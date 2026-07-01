@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "apiwrap.h"
 #include "base/call_delayed.h"
+#include "base/debug_log.h"
 #include "base/event_filter.h"
 #include "base/platform/base_platform_haptic.h"
 #include "data/data_chat_filters.h"
@@ -577,13 +578,22 @@ PullToNextChannel::PullToNextChannel(
 , _indicator(base::make_unique_q<Indicator>(scroll, controller->chatStyle()))
 , _hint(base::make_unique_q<HintOverlay>(parent)) {
 	_idleFinish.setCallback([this] {
-		if (_engaged) {
-			// The terminating wheel phase never arrived (see kIdleFinish):
-			// treat the lull as a finger lift and finalize the gesture so the
-			// reserved inset retracts (or jumps) instead of staying stranded.
-			(void)release();
-		}
+		// The terminating wheel phase never arrived (see kIdleFinish): treat the
+		// lull as a finger lift and finalize the gesture so the reserved inset
+		// retracts (or jumps) instead of staying stranded.
+		LOG(("PullNext: idleFinish fired engaged=%1 inset=%2 sinceWheel=%3"
+			).arg(Logs::b(_engaged)
+			).arg(_inner ? _inner->pullBottomInset() : -1
+			).arg(crl::now() - _lastWheel));
+		finalizeIfStranded();
 	});
+
+	// Disable the raw QScroller bottom overshoot on the history list: without
+	// this the list rubber-bands into empty space below the last message (the
+	// physics commit only shrinks that overshoot to ~20% of the viewport, it
+	// doesn't remove it). The pull-to-next-channel gesture owns the bottom
+	// affordance instead. Top overshoot is left at its default (allowTop=null).
+	_scroll->setOverscrollEdges(nullptr, [] { return false; });
 }
 
 PullToNextChannel::~PullToNextChannel() = default;
@@ -623,12 +633,22 @@ bool PullToNextChannel::atBottom() const {
 
 bool PullToNextChannel::processWheel(not_null<QWheelEvent*> e) {
 	const auto phase = e->phase();
+	const auto broadcast = _history && _history->peer->isBroadcast();
+	LOG(("PullNext: wheel phase=%1 dy=%2 engaged=%3 broadcast=%4 atBottom=%5 gaveUp=%6"
+		).arg(int(phase)
+		).arg(Ui::ScrollDeltaF(e).y()
+		).arg(Logs::b(_engaged)
+		).arg(Logs::b(broadcast)
+		).arg(Logs::b(_history && atBottom())
+		).arg(Logs::b(_gaveUp)));
 	if (phase == Qt::NoScrollPhase) {
 		return false;
 	} else if (phase == Qt::ScrollBegin) {
 		reset();
 		return false;
 	} else if (phase == Qt::ScrollEnd || phase == Qt::ScrollMomentum) {
+		LOG(("PullNext: terminating phase=%1 engaged=%2").arg(int(phase)
+			).arg(Logs::b(_engaged)));
 		return release() || _retract.animating() || _swallowMomentum;
 	} else if (!_engaged
 		&& (_gaveUp
@@ -639,6 +659,7 @@ bool PullToNextChannel::processWheel(not_null<QWheelEvent*> e) {
 	}
 	const auto delta = Ui::ScrollDeltaF(e);
 	const auto result = applyDelta(delta.x(), delta.y());
+	_lastWheel = crl::now();
 	if (_engaged) {
 		// Restart the watchdog on every delta; if deltas stop arriving without
 		// a ScrollEnd/ScrollMomentum (some Wayland touchpads), the timer fires
@@ -668,6 +689,7 @@ bool PullToNextChannel::applyDelta(float64 deltaX, float64 deltaY) {
 			return true;
 		}
 		_engaged = true;
+		LOG(("PullNext: ENGAGED down=%1").arg(down));
 		_retract.stop();
 		_accumulated = down;
 		_next = FindNextUnreadChannel(_controller, _history->peer);
@@ -702,6 +724,7 @@ bool PullToNextChannel::applyDelta(float64 deltaX, float64 deltaY) {
 
 bool PullToNextChannel::release() {
 	if (!_engaged) {
+		LOG(("PullNext: release() no-op, not engaged"));
 		return false;
 	}
 	const auto next = _next;
@@ -709,6 +732,8 @@ bool PullToNextChannel::release() {
 	const auto ready = (_offset >= float64(st::historyPullNextThreshold))
 		&& next
 		&& next->unreadCount() > 0;
+	LOG(("PullNext: release() ready=%1 offset=%2 hasNext=%3"
+		).arg(Logs::b(ready)).arg(_offset).arg(Logs::b(next != nullptr)));
 	_swallowMomentum = true;
 	clearState();
 	if (ready) {
@@ -762,7 +787,14 @@ void PullToNextChannel::applyShift(int shift) {
 	// dragged, retracting, or held during a pending jump). Otherwise a stray
 	// render or a momentum/animation tick fired after the gesture has ended
 	// would yank the chat down into the reserved space.
-	if (wasAtBottom && (_engaged || _retract.animating() || _jumpPending)) {
+	const auto pin = wasAtBottom
+		&& (_engaged || _retract.animating() || _jumpPending);
+	LOG(("PullNext: applyShift shift=%1 wasAtBottom=%2 pin=%3 engaged=%4 "
+		"retract=%5 jump=%6 scrollTopMax=%7"
+		).arg(shift).arg(Logs::b(wasAtBottom)).arg(Logs::b(pin)
+		).arg(Logs::b(_engaged)).arg(Logs::b(_retract.animating())
+		).arg(Logs::b(_jumpPending)).arg(_scroll->scrollTopMax()));
+	if (pin) {
 		_scroll->scrollToY(_scroll->scrollTopMax());
 	}
 	_inner->update();
@@ -808,21 +840,43 @@ void PullToNextChannel::reset() {
 	_hint->hideNow();
 }
 
-void PullToNextChannel::updateGeometry() {
-	// Self-heal: the reserved bottom inset must never survive into the idle
-	// state. If the gesture is over (not dragging, not animating, not jumping)
-	// drop it here. This covers cases where the terminating wheel phase
-	// (ScrollEnd/ScrollMomentum) is never delivered - e.g. some Wayland touchpad
-	// setups - which would otherwise strand the inset and let the chat scroll
-	// into empty space below the last message.
-	if (!_engaged
-		&& !_jumpPending
-		&& !_retract.animating()
-		&& !_expand.animating()
-		&& _inner
-		&& _inner->pullBottomInset() != 0) {
+void PullToNextChannel::finalizeIfStranded() {
+	if (!_inner || _inner->pullBottomInset() == 0) {
+		return;
+	}
+	// A reserved inset is only legitimate while the pull is genuinely live:
+	// being actively dragged (a wheel delta arrived within kIdleFinish),
+	// animating (retract/expand), or held for a pending channel jump. Anything
+	// else is stranded - most importantly a gesture whose terminating wheel
+	// phase (ScrollEnd/ScrollMomentum) never arrived, which leaves _engaged
+	// stuck true with no more deltas (some Wayland touchpads). The previous
+	// self-heal was guarded by !_engaged and so could never fire in exactly
+	// that case; keying on wheel staleness instead of _engaged fixes it.
+	const auto sinceWheel = crl::now() - _lastWheel;
+	const auto liveDrag = _engaged && (sinceWheel < kIdleFinish);
+	const auto live = liveDrag
+		|| _retract.animating()
+		|| _expand.animating()
+		|| _jumpPending;
+	if (live) {
+		return;
+	}
+	LOG(("PullNext: finalizeIfStranded clearing inset=%1 engaged=%2 sinceWheel=%3"
+		).arg(_inner->pullBottomInset()).arg(Logs::b(_engaged)).arg(sinceWheel));
+	if (_engaged) {
+		// Stranded mid-drag: treat the lull as a finger lift so the inset
+		// retracts (or jumps) through the normal path instead of vanishing.
+		(void)release();
+	} else {
 		applyShift(0);
 	}
+}
+
+void PullToNextChannel::updateGeometry() {
+	// Self-heal any stranded bottom inset. Invoked from
+	// HistoryWidget::updateHistoryGeometry() too, so a new message or resize
+	// can't lay the view out into reserved-but-dead space below the last item.
+	finalizeIfStranded();
 
 	const auto height = st::historyPullNextMaxHeight;
 	_indicator->setGeometry(

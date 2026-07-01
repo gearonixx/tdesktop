@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/history_inner_widget.h"
 
+#include "base/debug_log.h"
 #include "api/api_polls.h"
 #include "chat_helpers/stickers_emoji_pack.h"
 #include "core/application.h"
@@ -4521,6 +4522,8 @@ void HistoryInner::setPullBottomInset(int inset) {
 	if (_pullBottomInset == inset) {
 		return;
 	}
+	LOG(("PullNext[inner]: setPullBottomInset %1 -> %2"
+		).arg(_pullBottomInset).arg(inset));
 	_pullBottomInset = inset;
 	updateSize();
 }
@@ -4571,6 +4574,20 @@ void HistoryInner::updateSize() {
 		+ itemsHeight
 		+ _historyMarginBottom
 		+ _pullBottomInset;
+	if (height() != newHeight) {
+		// Full breakdown of the inner widget height. Empty space below the last
+		// message == inner height exceeding (content + viewport). Watch which
+		// term is inflated: itemsHeight (content), marginBottom (about-view /
+		// padding), marginTop, revealHeight, collapseGap, or pullInset.
+		LOG(("GAP[inner]: updateSize visibleH=%1 historyH=%2 itemsH=%3 "
+			"revealH=%4 collapseGap=%5 marginTop=%6 marginBottom=%7 "
+			"aboutH=%8 pullInset=%9 -> newHeight=%10 (=> scrollRange=%11)"
+			).arg(visibleHeight).arg(historyHeight()).arg(itemsHeight
+			).arg(_revealHeight).arg(collapseGapTotal).arg(_historyMarginTop
+			).arg(_historyMarginBottom
+			).arg(_aboutView ? _aboutView->height : -1).arg(_pullBottomInset
+			).arg(newHeight).arg(newHeight - visibleHeight));
+	}
 	if (width() != _scroll->width() || height() != newHeight) {
 		resize(_scroll->width(), newHeight);
 

@@ -55,6 +55,7 @@ private:
 	void startExpand(bool ready);
 	void applyShift(int shift);
 	void startRetract(float64 fromAccumulated, History *next);
+	void finalizeIfStranded();
 	void clearState();
 	void reset();
 	void jumpWhenReady(not_null<History*> next, crl::time waited);
@@ -79,6 +80,7 @@ private:
 	bool _pushVisible = false;
 	History *_pushNext = nullptr;
 
+	crl::time _lastWheel = 0;
 	float64 _accumulated = 0.;
 	float64 _offset = 0.;
 	float64 _swipeX = 0.;
