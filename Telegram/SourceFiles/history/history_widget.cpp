@@ -212,6 +212,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <QtGui/QWindow>
 #include <QtCore/QMimeData>
+#include <QtWidgets/QScroller>
 
 namespace {
 
@@ -385,8 +386,8 @@ HistoryWidget::HistoryWidget(
 		Ui::ElasticScroll::OverscrollType::Real);
 	_scroll->setOverscrollBg(QColor(0, 0, 0, 0));
 	_scroll->setOverscrollEdges(
-		[=] { return historyLoadedAtTop(); },
-		[=] { return historyLoadedAtBottom(); });
+		[] { return false; },
+		[] { return false; });
 	_scroll->geometryChanged(
 	) | rpl::on_next(crl::guard(_list, [=] {
 		_list->onParentGeometryChanged();
@@ -11119,6 +11120,9 @@ void HistoryWidget::synteticScrollToY(int y) {
 	if (_scroll->scrollTop() == y) {
 		visibleAreaUpdated();
 	} else {
+		if (QScroller::hasScroller(_scroll.data())) {
+			QScroller::scroller(_scroll.data())->stop();
+		}
 		_scroll->scrollToY(y);
 	}
 	_synteticScrollEvent = false;
