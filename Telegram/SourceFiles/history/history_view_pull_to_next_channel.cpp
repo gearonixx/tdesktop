@@ -571,6 +571,7 @@ PullToNextChannel::PullToNextChannel(
 , _controller(controller)
 , _indicator(base::make_unique_q<Indicator>(scroll, controller->chatStyle()))
 , _hint(base::make_unique_q<HintOverlay>(parent)) {
+	_scroll->setOverscrollEdges([] { return false; }, [] { return false; });
 }
 
 PullToNextChannel::~PullToNextChannel() = default;
