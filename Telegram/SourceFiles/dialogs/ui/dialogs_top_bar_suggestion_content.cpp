@@ -37,6 +37,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_layers.h"
 #include "styles/style_premium.h"
 #include "styles/style_settings.h"
+#include "styles/style_window.h"
 
 namespace Dialogs {
 namespace {
@@ -166,6 +167,9 @@ void UnconfirmedAuthWrap::releaseCollapseSnapshot() {
 }
 
 int UnconfirmedAuthWrap::resizeGetHeight(int newWidth) {
+	if (newWidth < st::columnMinimalWidthLeft / 2) {
+		return 0;
+	}
 	if (!_collapseSnapshot.isNull()) {
 		const auto fullHeight = int(_collapseSnapshot.height()
 			/ _collapseSnapshot.devicePixelRatio());
@@ -175,7 +179,8 @@ int UnconfirmedAuthWrap::resizeGetHeight(int newWidth) {
 	if (const auto w = wrapped()) {
 		w->resizeToWidth(newWidth);
 	}
-	return wrapped() ? wrapped()->height() : 0;
+	const auto fullHeight = wrapped() ? wrapped()->height() : 0;
+	return int(base::SafeRound(fullHeight * (1. - _collapseProgress)));
 }
 
 not_null<UnconfirmedAuthWrap*> CreateUnconfirmedAuthContent(
