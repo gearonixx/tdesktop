@@ -923,7 +923,7 @@ reactionFlyUp: 50px;
 
 replyCornerHeight: 20px;
 replyCornerShadow: margins(4px, 8px, 4px, 8px);
-replyCornerCenter: point(7px, -2px);
+replyCornerCenter: point(7px, 12px);
 replyCornerTextPadding: margins(6px, 0px, 6px, 0px);
 
 effectInfoImage: 12px;
