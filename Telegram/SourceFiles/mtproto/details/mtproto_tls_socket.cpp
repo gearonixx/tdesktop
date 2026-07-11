@@ -754,6 +754,11 @@ void TlsSocket::checkHelloParts34(int parts123Size) {
 }
 
 void TlsSocket::checkHelloDigest() {
+	if (_serverHelloLength < kServerHelloDigestPosition + kHelloDigestLength) {
+		logError(888, "Bad Server Hello length.");
+		handleError();
+		return;
+	}
 	const auto fulldata = bytes::make_detached_span(_incoming).subspan(
 		0,
 		kHelloDigestLength + _serverHelloLength);
