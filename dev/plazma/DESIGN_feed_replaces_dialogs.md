@@ -78,8 +78,16 @@ the watch page behaves like an opened chat.
 
 1. **[done]** `plazma_api.*` (backend) + `plazma_session.*` (auth bridge), wired
    into `Telegram/CMakeLists.txt`; purple `.tdesktop-theme`.
-2. `Plazma::FeedWidget` (B0) — `Ui::RpWidget` card scroll; `fetchVideos("")`;
-   drop it beside `_dialogs` behind a runtime flag. First visible feed.
+2. **[done]** `Plazma::FeedWidget` (B0) — `Ui::RpWidget` + `Ui::ScrollArea`
+   card scroll (`plazma_feed_widget.{h,cpp}`). Owns its own `Plazma::Backend`,
+   logs in with the session, calls `fetchVideos("")`, paints title/author/date
+   cards with a thumbnail placeholder + "Plazma" header + status line.
+   `MainWidget` constructs it next to `_dialogs` and positions it over the
+   chat-list column in both one- and two-column layouts (see the `_plazmaFeed`
+   edits in `mainwidget.{cpp,h}`). Builds + links + runs. Shows a
+   "start the backend on localhost:8080" status until PlazmaServer is up.
+   *Follow-ups:* real thumbnails need an HTTP image loader; click-to-open a
+   watch surface is step 3.
 3. `Plazma::WatchSection : Window::SectionWidget` — opened via `showSection`.
    **De-risk playback first (see SESSION_FINDINGS gotcha #2):** `Media::Streaming`
    has only local + MTProto loaders, no HTTP one — prototype an HTTP
