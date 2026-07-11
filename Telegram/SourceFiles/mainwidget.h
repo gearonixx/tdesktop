@@ -48,6 +48,10 @@ class Key;
 class Widget;
 } // namespace Dialogs
 
+namespace Plazma {
+class FeedWidget;
+} // namespace Plazma
+
 namespace Media {
 namespace Player {
 class Widget;
@@ -342,6 +346,8 @@ private:
 	Ui::Animations::Simple _a_dialogsWidth;
 
 	const base::unique_qptr<Dialogs::Widget> _dialogs;
+	// Plazma: video feed overlaid on the chat-list column (see plazma_feed_widget).
+	base::unique_qptr<Plazma::FeedWidget> _plazmaFeed;
 	const base::unique_qptr<HistoryWidget> _history;
 	object_ptr<Window::SectionWidget> _mainSection = { nullptr };
 	object_ptr<Window::SectionWidget> _thirdSection = { nullptr };

@@ -1655,6 +1655,8 @@ PRIVATE
     platform/platform_window_title.h
     plazma/plazma_api.cpp
     plazma/plazma_api.h
+    plazma/plazma_feed_widget.cpp
+    plazma/plazma_feed_widget.h
     plazma/plazma_playlists.cpp
     plazma/plazma_playlists.h
     plazma/plazma_session.cpp

@@ -52,6 +52,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/info_memento.h"
 #include "apiwrap.h"
 #include "dialogs/dialogs_widget.h"
+#include "plazma/plazma_feed_widget.h"
 #include "history/history_widget.h"
 #include "history/history_drag_area.h"
 #include "history/history_item_helpers.h" // GetErrorForSending.
@@ -274,6 +275,13 @@ MainWidget::MainWidget(
 , _changelogs(Core::Changelogs::Create(&controller->session())) {
 	if (_dialogs) {
 		setupConnectingWidget();
+
+		// Plazma: overlay the video feed on the chat-list column. It logs into
+		// PlazmaServer with this Telegram session and shows GET /v1/videos.
+		_plazmaFeed.reset(new Plazma::FeedWidget(
+			this,
+			&_controller->session()));
+		_plazmaFeed->show();
 	}
 
 	_history->cancelRequests(
@@ -422,6 +430,10 @@ MainWidget::MainWidget(
 
 	if (_dialogs) {
 		_dialogs->show();
+		if (_plazmaFeed) {
+			_plazmaFeed->show();
+			_plazmaFeed->raise();
+		}
 	}
 	if (_dialogs && isOneColumn()) {
 		_history->hide();
@@ -2472,6 +2484,10 @@ void MainWidget::updateControlsGeometry() {
 			_dialogs->setGeometryWithTopMoved(
 				mainSectionGeometry,
 				_contentScrollAddToY);
+			if (_plazmaFeed) {
+				_plazmaFeed->setGeometry(mainSectionGeometry);
+				_plazmaFeed->raise();
+			}
 		}
 		_history->setGeometryWithTopMoved(
 			mainSectionGeometry,
@@ -2494,6 +2510,10 @@ void MainWidget::updateControlsGeometry() {
 				dialogsWidth,
 				width() - st::columnMinimalWidthMain);
 			_dialogs->setGeometryToLeft(0, 0, dialogsWidth, height());
+			if (_plazmaFeed) {
+				_plazmaFeed->setGeometry(0, 0, dialogsWidth, height());
+				_plazmaFeed->raise();
+			}
 		}
 		if (_sideShadow) {
 			_sideShadow->setGeometryToLeft(
