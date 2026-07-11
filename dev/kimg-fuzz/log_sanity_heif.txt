@@ -1,0 +1,40 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3264687741
+INFO: Loaded 1 modules   (1379 inline 8-bit counters): 1379 [0x5615463ec408, 0x5615463ec96b), 
+INFO: Loaded 1 PC tables (1379 PCs): 1379 [0x5615463ec970,0x5615463f1fa0), 
+INFO:        1 files found in corpus_heif
+INFO:        1 files found in seed_heif
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 2 min: 457b max: 457b total: 914b rss: 47Mb
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==81483==ERROR: AddressSanitizer: SEGV on unknown address 0x00000000000d (pc 0x7fd7752b885f bp 0x7ffd62fba440 sp 0x7ffd62fba3c0 T0)
+==81483==The signal is caused by a READ memory access.
+==81483==Hint: address points to the zero page.
+    #0 0x7fd7752b885f  (/usr/lib/libstdc++.so.6+0xb885f) (BuildId: 4749d5ce79ac21b5e837c001c58e342b35197e4b)
+    #1 0x5615461477f3 in __dynamic_cast (/home/x/c/tdesktop/dev/kimg-fuzz/fuzz_heif+0xc87f3) (BuildId: 42559e84338f52c9c1215167e5bfd3a196bb677e)
+    #2 0x7fd773f0516d in heif_context_get_primary_image_handle (/usr/lib/libheif.so.1+0xc316d) (BuildId: 2e20e79dc119ca07f71d95f32b4410d30efd8ffa)
+    #3 0x56154636dff8 in HEIFHandler::ensureDecoder() /home/x/c/tdesktop/Telegram/ThirdParty/kimageformats/src/imageformats/heif.cpp:463:11
+    #4 0x561546369ce7 in HEIFHandler::ensureParsed() const /home/x/c/tdesktop/Telegram/ThirdParty/kimageformats/src/imageformats/heif.cpp:429:26
+    #5 0x561546369ce7 in HEIFHandler::read(QImage*) /home/x/c/tdesktop/Telegram/ThirdParty/kimageformats/src/imageformats/heif.cpp:89:10
+    #6 0x5615463686d4 in LLVMFuzzerTestOneInput /home/x/c/tdesktop/dev/kimg-fuzz/h_one.cpp:11:40
+    #7 0x5615460f827c in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) fuzzer.o
+    #8 0x5615460f8e00 in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long, bool, fuzzer::InputInfo*, bool, bool*) fuzzer.o
+    #9 0x5615460faceb in fuzzer::Fuzzer::ReadAndExecuteSeedCorpora(std::__Fuzzer::vector<fuzzer::SizedFile, std::__Fuzzer::allocator<fuzzer::SizedFile>>&) fuzzer.o
+    #10 0x5615460fb4c7 in fuzzer::Fuzzer::Loop(std::__Fuzzer::vector<fuzzer::SizedFile, std::__Fuzzer::allocator<fuzzer::SizedFile>>&) fuzzer.o
+    #11 0x5615460e688c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) fuzzer.o
+    #12 0x5615460cd377 in main (/home/x/c/tdesktop/dev/kimg-fuzz/fuzz_heif+0x4e377) (BuildId: 42559e84338f52c9c1215167e5bfd3a196bb677e)
+    #13 0x7fd773c27740 in __libc_start_call_main /usr/src/debug/glibc/glibc/csu/../sysdeps/nptl/libc_start_call_main.h:59:16
+    #14 0x7fd773c27878 in __libc_start_main /usr/src/debug/glibc/glibc/csu/../csu/libc-start.c:360:3
+    #15 0x5615460cd434 in _start (/home/x/c/tdesktop/dev/kimg-fuzz/fuzz_heif+0x4e434) (BuildId: 42559e84338f52c9c1215167e5bfd3a196bb677e)
+
+==81483==Register values:
+rax = 0x0000000000000000  rbx = 0x00007fd773ffc380  rcx = 0x0000000000000001  rdx = 0x2822dd1ec8308a00  
+rdi = 0x00007fd773ffc240  rsi = 0x00007ffd62fba470  rbp = 0x00007ffd62fba440  rsp = 0x00007ffd62fba3c0  
+ r8 = 0x0000000000000006   r9 = 0x00007fd7752b4b47  r10 = 0x0000000000000039  r11 = 0x00007fd773fb6708  
+r12 = 0x00007d676dbe3790  r13 = 0x00007fd773ffc240  r14 = 0x00007d676dbe3790  r15 = 0x00007fd773ffc240  
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/usr/lib/libstdc++.so.6+0xb885f) (BuildId: 4749d5ce79ac21b5e837c001c58e342b35197e4b) 
+==81483==ABORTING
+MS: 0 ; base unit: 0000000000000000000000000000000000000000
+artifact_prefix='./'; Test unit written to ./crash-fef20e6da8dc860a858805358679be8a1e300d56

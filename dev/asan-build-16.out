@@ -1,0 +1,99 @@
+=== [21:43:27] asan-build-16: starting (-j16) ===
+Version: 6.9.3
+-- Using system ZLIB.
+-- Using Qt bundled PCRE2.
+-- Found GLIB2: /usr/lib64/libglib-2.0.so
+-- Found lcms version 2.15, /usr/local/lib64/liblcms2.a
+-- Using Qt bundled PNG.
+-- Using Qt bundled Harfbuzz.
+-- Using system Freetype.
+-- Found Wayland: /usr/lib64/libwayland-client.so;/usr/lib64/libwayland-server.so;/usr/lib64/libwayland-cursor.so;/usr/lib64/libwayland-egl.so (found version "1.21.0")
+-- Using system Jpeg.
+-- Found GLIB2: /usr/lib64/libglib-2.0.so  found components: GOBJECT
+-- Found GLIB2: /usr/lib64/libglib-2.0.so  found components: GIO
+-- Found Wayland: /usr/lib64/libwayland-client.so;/usr/lib64/libwayland-server.so;/usr/lib64/libwayland-cursor.so;/usr/lib64/libwayland-egl.so (found suitable version "1.21.0", minimum required is "1.15")
+-- XCB: CURSOR requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a (found suitable version "1.13.1", minimum required is "0.1.1") found components: CURSOR
+-- XCB: ICCCM requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a (found suitable version "1.13.1", minimum required is "0.3.9") found components: ICCCM
+-- XCB: UTIL requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a (found suitable version "1.13.1", minimum required is "0.3.8") found components: UTIL
+-- XCB: IMAGE requires XCB;SHM;AUX
+-- XCB: IMAGE requires XCB;SHM;AUX
+-- XCB: IMAGE requires XCB;SHM;AUX
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a (found suitable version "1.13.1", minimum required is "0.3.9") found components: IMAGE
+-- XCB: KEYSYMS requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a (found suitable version "1.13.1", minimum required is "0.3.9") found components: KEYSYMS
+-- XCB: RANDR requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a (found version "1.13.1") found components: RANDR
+-- XCB: RENDER requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a (found version "1.13.1") found components: RENDER
+-- XCB: RENDERUTIL requires XCB;RENDER
+-- XCB: RENDERUTIL requires XCB;RENDER
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a;/usr/local/lib/libxcb-render-util.a (found suitable version "1.13.1", minimum required is "0.3.9") found components: RENDERUTIL
+-- XCB: SHAPE requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a;/usr/local/lib/libxcb-render-util.a;/usr/local/lib/libxcb-shape.a (found version "1.13.1") found components: SHAPE
+-- XCB: SHM requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a;/usr/local/lib/libxcb-render-util.a;/usr/local/lib/libxcb-shape.a (found version "1.13.1") found components: SHM
+-- XCB: SYNC requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a;/usr/local/lib/libxcb-render-util.a;/usr/local/lib/libxcb-shape.a;/usr/local/lib/libxcb-sync.a (found version "1.13.1") found components: SYNC
+-- Could NOT find XCB_XEVIE (missing: XCB_XEVIE_LIBRARY) (found version "")
+-- Could NOT find XCB_XPRINT (missing: XCB_XPRINT_LIBRARY) (found version "")
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a;/usr/local/lib/libxcb-render-util.a;/usr/local/lib/libxcb-shape.a;/usr/local/lib/libxcb-sync.a;/usr/local/lib/libxcb-xfixes.a;/usr/local/lib/libxcb-composite.a;/usr/local/lib/libxcb-damage.a;/usr/local/lib/libxcb-dpms.a;/usr/local/lib/libxcb-dri2.a;/usr/local/lib/libxcb-dri3.a;/usr/local/lib/libxcb-ewmh.a;/usr/local/lib/libxcb-glx.a;/usr/local/lib/libxcb-present.a;/usr/local/lib/libxcb-record.a;/usr/local/lib/libxcb-res.a;/usr/local/lib/libxcb-screensaver.a;/usr/local/lib/libxcb-xf86dri.a;/usr/local/lib/libxcb-xinerama.a;/usr/local/lib/libxcb-xinput.a;/usr/local/lib/libxcb-xkb.a;/usr/local/lib/libxcb-xtest.a;/usr/local/lib/libxcb-xv.a;/usr/local/lib/libxcb-xvmc.a (found suitable version "1.13.1", minimum required is "1.11")
+-- XCB: XFIXES requires XCB;RENDER;SHAPE
+-- XCB: XFIXES requires XCB;RENDER;SHAPE
+-- XCB: XFIXES requires XCB;RENDER;SHAPE
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a;/usr/local/lib/libxcb-render-util.a;/usr/local/lib/libxcb-shape.a;/usr/local/lib/libxcb-sync.a;/usr/local/lib/libxcb-xfixes.a;/usr/local/lib/libxcb-composite.a;/usr/local/lib/libxcb-damage.a;/usr/local/lib/libxcb-dpms.a;/usr/local/lib/libxcb-dri2.a;/usr/local/lib/libxcb-dri3.a;/usr/local/lib/libxcb-ewmh.a;/usr/local/lib/libxcb-glx.a;/usr/local/lib/libxcb-present.a;/usr/local/lib/libxcb-record.a;/usr/local/lib/libxcb-res.a;/usr/local/lib/libxcb-screensaver.a;/usr/local/lib/libxcb-xf86dri.a;/usr/local/lib/libxcb-xinerama.a;/usr/local/lib/libxcb-xinput.a;/usr/local/lib/libxcb-xkb.a;/usr/local/lib/libxcb-xtest.a;/usr/local/lib/libxcb-xv.a;/usr/local/lib/libxcb-xvmc.a (found version "1.13.1") found components: XFIXES
+-- XCB: XKB requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a;/usr/local/lib/libxcb-render-util.a;/usr/local/lib/libxcb-shape.a;/usr/local/lib/libxcb-sync.a;/usr/local/lib/libxcb-xfixes.a;/usr/local/lib/libxcb-composite.a;/usr/local/lib/libxcb-damage.a;/usr/local/lib/libxcb-dpms.a;/usr/local/lib/libxcb-dri2.a;/usr/local/lib/libxcb-dri3.a;/usr/local/lib/libxcb-ewmh.a;/usr/local/lib/libxcb-glx.a;/usr/local/lib/libxcb-present.a;/usr/local/lib/libxcb-record.a;/usr/local/lib/libxcb-res.a;/usr/local/lib/libxcb-screensaver.a;/usr/local/lib/libxcb-xf86dri.a;/usr/local/lib/libxcb-xinerama.a;/usr/local/lib/libxcb-xinput.a;/usr/local/lib/libxcb-xkb.a;/usr/local/lib/libxcb-xtest.a;/usr/local/lib/libxcb-xv.a;/usr/local/lib/libxcb-xvmc.a (found version "1.13.1") found components: XKB
+-- XCB: GLX requires XCB
+-- Found XCB: /usr/lib64/libxcb.so;/usr/local/lib/libxcb-cursor.a;/usr/local/lib/libxcb-icccm.a;/usr/local/lib/libxcb-util.a;/usr/local/lib/libxcb-shm.a;/usr/local/lib/libxcb-image.a;/usr/local/lib/libxcb-keysyms.a;/usr/local/lib/libxcb-randr.a;/usr/local/lib/libxcb-render.a;/usr/local/lib/libxcb-render-util.a;/usr/local/lib/libxcb-shape.a;/usr/local/lib/libxcb-sync.a;/usr/local/lib/libxcb-xfixes.a;/usr/local/lib/libxcb-composite.a;/usr/local/lib/libxcb-damage.a;/usr/local/lib/libxcb-dpms.a;/usr/local/lib/libxcb-dri2.a;/usr/local/lib/libxcb-dri3.a;/usr/local/lib/libxcb-ewmh.a;/usr/local/lib/libxcb-glx.a;/usr/local/lib/libxcb-present.a;/usr/local/lib/libxcb-record.a;/usr/local/lib/libxcb-res.a;/usr/local/lib/libxcb-screensaver.a;/usr/local/lib/libxcb-xf86dri.a;/usr/local/lib/libxcb-xinerama.a;/usr/local/lib/libxcb-xinput.a;/usr/local/lib/libxcb-xkb.a;/usr/local/lib/libxcb-xtest.a;/usr/local/lib/libxcb-xv.a;/usr/local/lib/libxcb-xvmc.a (found version "1.13.1") found components: GLX
+-- Configuring done (0.2s)
+-- Generating done (0.1s)
+-- Build files have been written to: /usr/src/tdesktop/out/cmake/external/dispatch/dispatch-prefix/src/dispatch-build
+ninja: no work to do.
+-- Checking for module 'fmt'
+--   Package 'fmt', required by 'virtual:world', not found
+-- fmtlib available status: OFF
+-- std::format available status: TRUE
+-- coroutine support available status: TRUE
+-- example programs: 
+-- ronn manpage processor not found; not building manpage
+-- Checking for module 'hunspell'
+--   Package 'hunspell', required by 'virtual:world', not found
+-- Checking for module 'liblz4'
+--   Package 'liblz4', required by 'virtual:world', not found
+-- Checking for module 'libxxhash'
+--   Package 'libxxhash', required by 'virtual:world', not found
+-- QSB: found /usr/local/bin/qsb, will compile /usr/src/tdesktop/Telegram/shaders/*.vert/*.frag/*.comp
+-- Models: will bake /usr/src/tdesktop/Telegram/Resources/art/**/*.obj -> .binobj
+-- Configuring done (16.0s)
+-- Generating done (8.4s)
+-- Build files have been written to: /usr/src/tdesktop/out
+--- building Telegram (Asan, -j16) ---
+[1/1301] Generating AppStream changelog (Telegram)
+[2/1301] Linking CXX executable Telegram/codegen/codegen/lang/Asan/codegen_lang
+[3/1301] Generating lang (td_lang)
+[4/1296] Linking CXX executable Telegram/codegen/codegen/style/Asan/codegen_style
+[5/1296] Generating palette (lib_ui)
+[6/1236] Generating styles (lib_ui)
+[7/1137] Linking CXX executable Telegram/codegen/codegen/emoji/Asan/codegen_emoji
+[8/1137] Generating emoji (lib_ui)
+[9/735] Generating styles (td_ui)
+[10/12] Automatic MOC for target Telegram
+[11/11] Linking CXX executable Asan/Telegram
+FAILED: [code=1] Asan/Telegram 
+: && /opt/rh/gcc-toolset-14/root/usr/bin/c++ -g -O3 -flto=auto -ffat-lto-objects -pipe -fPIC -fno-strict-aliasing -fexceptions -fasynchronous-unwind-tables -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fhardened -Wno-hardened -O1 -g -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-lto -static-libstdc++ -static-libgcc -static-libasan -pthread -Wl,--push-state,--no-as-needed,-ldl,--pop-state -Wl,--as-needed -Wl,-z,muldefs -Wl,--no-keep-memory -Wl,--reduce-memory-overheads -fsanitize=address   -Wno-alloc-size-larger-than -Wno-free-nonheap-object -Wno-stringop-overflow -Wno-stringop-overread -Wno-odr -Wno-inline -pthread -Wl,--as-needed -Wl,--gc-sections -Wl,--dependency-file=Telegram/CMakeFiles/Telegram.dir/Asan/link.d @CMakeFiles/Telegram.Asan.rsp -o Asan/Telegram && :
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xc284): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xc29c): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xc396): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xc51e): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xc59c): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xc61a): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xca8e): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xcaa6): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xcabe): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xcad6): relocation truncated to fit: R_X86_64_32 against `.debug_info'
+/usr/local/lib/libQt6Gui.a(qpaintengine_raster.cpp.o):(.debug_loc+0xcb06): additional relocation overflows omitted from the output
+collect2: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.

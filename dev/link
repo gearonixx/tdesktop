@@ -1,0 +1,102 @@
+#!/bin/bash
+# Host-side wrapper that gets CLion ready to SSH into the tdesktop dev container.
+#
+# Same idea as the ytsaurus dev/link script. Steps:
+#   0. Build the dev image and create+start the container if they don't exist.
+#   1. Make sure the container is running.
+#   2. Run dev/manually-start-ssh.sh inside it (host keys, clion_key,
+#      authorized_keys, sshd).
+#   3. Copy the generated private key out to the host so CLion can use it.
+#   4. Verify the host can actually SSH into the container.
+#
+# Run this from the host, from anywhere:
+#     ./dev/link
+#
+# Overrides (env vars):
+#     IMAGE=tdesktop-dev          docker image tag built from dev/
+#     BASE_IMAGE=tdesktop:centos_env  official build image to layer on
+#     CONTAINER=tdesktop-dev      container name
+#     HOST_KEY=~/.ssh/tdesktop_clion_key  where to drop the private key
+#     PORT=2222                   host port published to container 2222
+
+set -euo pipefail
+
+IMAGE="${IMAGE:-tdesktop-clion}"
+BASE_IMAGE="${BASE_IMAGE:-tdesktop:centos_env}"
+CONTAINER="${CONTAINER:-tdesktop-clion}"
+HOST_KEY="${HOST_KEY:-$HOME/.ssh/tdesktop_clion_key}"
+PORT="${PORT:-2222}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+IN_CONTAINER_SCRIPT="/usr/src/tdesktop/dev/manually-start-ssh.sh"
+
+echo "[0/4] Ensuring image + container exist..."
+if ! docker container inspect "${CONTAINER}" >/dev/null 2>&1; then
+    # Base build image (the heavy one). Build it once if missing.
+    if ! docker image inspect "${BASE_IMAGE}" >/dev/null 2>&1; then
+        echo "      base image '${BASE_IMAGE}' missing — building it (this is slow)..."
+        docker build -t "${BASE_IMAGE}" "${REPO_DIR}/Telegram/build/docker/centos_env"
+    fi
+    # Our lightweight ssh/dev layer.
+    echo "      building '${IMAGE}' from dev/Dockerfile..."
+    docker build -t "${IMAGE}" "${SCRIPT_DIR}"
+    echo "      creating container '${CONTAINER}' (source mounted at /usr/src/tdesktop)..."
+    docker run -d \
+        --name "${CONTAINER}" \
+        -p "${PORT}:2222" \
+        -v "${REPO_DIR}":/usr/src/tdesktop \
+        -v tdesktop-ccache:/home/user/.cache \
+        -w /usr/src/tdesktop \
+        "${IMAGE}" >/dev/null
+    echo "      created."
+fi
+
+echo "[1/4] Ensuring container '${CONTAINER}' is running..."
+state="$(docker container inspect -f '{{.State.Status}}' "${CONTAINER}")"
+if [ "${state}" != "running" ]; then
+    docker start "${CONTAINER}" >/dev/null
+    echo "      started (was ${state})"
+else
+    echo "      already running"
+fi
+
+echo "[2/4] Running manually-start-ssh.sh inside the container..."
+docker exec "${CONTAINER}" bash "${IN_CONTAINER_SCRIPT}"
+
+echo "[3/4] Copying private key to host (${HOST_KEY})..."
+mkdir -p "$(dirname "${HOST_KEY}")"
+chmod 700 "$(dirname "${HOST_KEY}")"
+docker cp "${CONTAINER}:/home/user/.ssh/clion_key"     "${HOST_KEY}"
+docker cp "${CONTAINER}:/home/user/.ssh/clion_key.pub" "${HOST_KEY}.pub"
+chmod 600 "${HOST_KEY}"
+chmod 644 "${HOST_KEY}.pub"
+
+echo "[4/4] Verifying host can SSH into the container..."
+IP="$(docker container inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$v.IPAddress}}{{"\n"}}{{end}}' "${CONTAINER}" | awk 'NF{print; exit}')"
+if [ -z "${IP}" ]; then
+    IP="$(docker container inspect -f '{{.NetworkSettings.IPAddress}}' "${CONTAINER}")"
+fi
+if [ -z "${IP}" ]; then
+    echo "ERROR: could not determine container IP." >&2
+    exit 1
+fi
+if ssh -i "${HOST_KEY}" \
+       -o StrictHostKeyChecking=no \
+       -o UserKnownHostsFile=/dev/null \
+       -o LogLevel=ERROR \
+       -p 2222 "user@${IP}" 'echo SSH_OK' 2>/dev/null | grep -q SSH_OK; then
+    echo
+    echo "OK — CLion can now connect with:"
+    echo "    Host: ${IP}   (or localhost via published port ${PORT})"
+    echo "    Port: 2222    (${PORT} on localhost)"
+    echo "    User: user"
+    echo "    Key:  ${HOST_KEY}"
+    echo
+    echo "Quick test from a terminal:"
+    echo "    ssh -i ${HOST_KEY} -p 2222 user@${IP}"
+else
+    echo "ERROR: sshd is up inside the container but the host can't reach it on ${IP}:2222." >&2
+    echo "       Check 'docker network inspect bridge' and that nothing on the host blocks 172.17.0.0/16." >&2
+    exit 1
+fi

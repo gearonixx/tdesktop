@@ -1,0 +1,9 @@
+=== BUILD CYCLE FAILED — recent compile errors ===
+1257:FAILED: [code=1] Telegram/lib_ui/CMakeFiles/lib_ui.dir/Asan/ui/accessible/ui_accessible_widget.cpp.o 
+1260:/usr/src/tdesktop/Telegram/lib_ui/ui/accessible/ui_accessible_widget.cpp:364:55: error: ‘Orientation’ is not a member of ‘QAccessible::Attribute’
+1264:/usr/src/tdesktop/Telegram/lib_ui/ui/accessible/ui_accessible_widget.cpp:370:44: error: ‘Orientation’ is not a member of ‘QAccessible::Attribute’
+2500:FAILED: [code=1] Telegram/CMakeFiles/Telegram.dir/Asan/SourceFiles/media/view/media_view_overlay_widget.cpp.o 
+2503:/usr/src/tdesktop/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp:5877:37: error: no matching function for call to ‘max(const int64&, crl::time)’
+2540:/usr/src/tdesktop/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp:5878:37: error: no matching function for call to ‘max(const int64&, crl::time)’
+2806:FAILED: [code=1] Asan/Telegram 
+2808:collect2: fatal error: ld terminated with signal 9 [Killed]

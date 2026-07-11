@@ -1,0 +1,50 @@
+=================================================================
+==59248==ERROR: AddressSanitizer: global-buffer-overflow on address 0x5555566861f0 at pc 0x555555a9e41a bp 0x7fffffffd6b0 sp 0x7fffffffd6a8
+READ of size 8 at 0x5555566861f0 thread T0
+    #0 0x555555a9e419 in std::_Function_base::_M_empty() const /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/16.1.1/../../../../include/c++/16.1.1/bits/std_function.h:252:37
+    #1 0x555555a9e419 in std::function<float (tex::Environment const&)>::operator()(tex::Environment const&) const /usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/16.1.1/../../../../include/c++/16.1.1/bits/std_function.h:579:6
+    #2 0x555555a9e419 in tex::SpaceAtom::getFactor(tex::UnitType, tex::Environment const&) /home/x/c/tdesktop/Telegram/ThirdParty/MicroTeX/src/atom/atom_space.h:45:12
+    #3 0x555555a9e419 in tex::SpaceAtom::createBox(tex::Environment&) /home/x/c/tdesktop/Telegram/ThirdParty/MicroTeX/src/atom/atom_space.cpp:19:24
+    #4 0x555555825969 in tex::TeXRenderBuilder::build(std::shared_ptr<tex::Atom> const&) /home/x/c/tdesktop/Telegram/ThirdParty/MicroTeX/src/render.cpp:195:17
+    #5 0x555555879103 in tex::LaTeX::parse(std::__cxx11::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>> const&, int, float, float, unsigned int) /home/x/c/tdesktop/Telegram/ThirdParty/MicroTeX/src/latex.cpp:189:8
+    #6 0x555555bbc10d in runOne(unsigned char const*, unsigned long) /home/x/c/tdesktop/dev/microtex-fuzz/afl_microtex_np.cpp:38:25
+    #7 0x555555bbc10d in main /home/x/c/tdesktop/dev/microtex-fuzz/afl_microtex_np.cpp:65:3
+    #8 0x7ffff7827740 in __libc_start_call_main /usr/src/debug/glibc/glibc/csu/../sysdeps/nptl/libc_start_call_main.h:59:16
+    #9 0x7ffff7827878 in __libc_start_main /usr/src/debug/glibc/glibc/csu/../csu/libc-start.c:360:3
+    #10 0x5555556aa894 in _start (/home/x/c/tdesktop/dev/microtex-fuzz/build_afl2/afl_microtex_np+0x156894) (BuildId: 0f7f2e15ca0d25e57a0827cf4c3e2ada74030b9d)
+
+0x5555566861f0 is located 16 bytes before global variable 'tex::SpaceAtom::_unitConversions' defined in '/home/x/c/tdesktop/Telegram/ThirdParty/MicroTeX/src/atom/atom_space.h:18' (0x555556686200) of size 448
+0x5555566861f0 is located 8 bytes after global variable 'tex::PI' defined in '/home/x/c/tdesktop/Telegram/ThirdParty/MicroTeX/src/utils/nums.h:18' (0x5555566861e0) of size 8
+SUMMARY: AddressSanitizer: global-buffer-overflow /home/x/c/tdesktop/Telegram/ThirdParty/MicroTeX/src/atom/atom_space.h:45:12 in tex::SpaceAtom::getFactor(tex::UnitType, tex::Environment const&)
+Shadow bytes around the buggy address:
+  0x555556685f00: 04 f9 f9 f9 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x555556685f80: 00 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x555556686000: 00 00 00 00 00 f9 f9 f9 00 00 00 00 00 00 f9 f9
+  0x555556686080: f9 f9 f9 f9 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9
+  0x555556686100: 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9 00 00 00 00
+=>0x555556686180: 00 f9 f9 f9 00 00 f9 f9 00 00 00 00 00 f9[f9]f9
+  0x555556686200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x555556686280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x555556686300: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x555556686380: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 f9 f9 f9 f9
+  0x555556686400: f9 f9 f9 f9 00 00 00 00 00 f9 f9 f9 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==59248==ABORTING

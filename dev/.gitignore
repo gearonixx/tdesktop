@@ -1,0 +1,67 @@
+# Only first-party notes, PoC source and scripts are tracked.
+# Everything below is vendored deps, build output or fuzzer artifacts — all
+# regenerable, much of it exceeds GitHub's per-file limit.
+
+# Vendored third-party source/build trees (cloned deps, not our work).
+kimg-fuzz/heif-build/
+
+# Build / output / corpus / crash directories anywhere in the tree.
+asan-run/
+build/
+build_*/
+out/
+out_*/
+out2/
+out3/
+triage/
+triage_*/
+triage3/
+artifacts_*/
+corpus/
+corpus_*/
+crashes/
+findings/
+seeds/
+seeds_*/
+deep_seeds/
+override/
+main/
+sess/
+campaign2/
+campaign3/
+__pycache__/
+
+# Loose artifacts by extension.
+*.log
+*.png
+*.a
+*.o
+*.so
+*.gcda
+*.gcno
+*.profraw
+*.bin
+*.zip
+*.tar
+*.tar.*
+
+# Compiled ELF binaries (no extension) — sources kept, outputs dropped.
+tgcalls-mtproto-audit/fuzz_videostream
+tgcalls-mtproto-audit/fuzz_mtp_length
+tgcalls-mtproto-audit/poc_notsecure_oob
+tgcalls-mtproto-audit/poc_respq_dos
+kimg-fuzz/fuzz_qoi
+kimg-fuzz/fuzz_avif
+kimg-fuzz/fuzz_heif
+kimg-fuzz/fuzz_jxl
+kimg-fuzz/fuzz_heif_1222
+kimg-fuzz/fuzz_heif_a
+kimg-fuzz/fuzz_heif_asan
+kimg-fuzz/drv_heif_clang
+kimg-fuzz/drv_heif_1222
+kimg-fuzz/kimgfuzz
+kimg-fuzz/fuzz_heif_cov
+kimg-fuzz/drv_heif
+mtproto-notsecure-oob/repro
+tgcalls-mtproto-audit/fuzz_audio_channels
+mtproto-webrtc-deep/poc

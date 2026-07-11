@@ -1,0 +1,89 @@
+1642ee17-0074-4790-2bac46b2-c23cd00e.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+1c5d03d8-96f0-4d06-5a5b26b8-85facb83.dmp   | SIGSEGV SIGSEGV @0x100000000 (canonical-wild) | rip_in=telegram-desktop     | assert=- 
+231c40a9-1c14-4b12-5ad165a1-0a87e602.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=!(__hi < __lo) 
+4017e9ef-4364-4bc8-df91d2b2-572fe3da.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=!(__hi < __lo) 
+62a40a6d-f34f-4380-ee6dae9f-0eb3b5a5.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=!(__hi < __lo) 
+74f13c11-ae59-49e1-7f59e39e-46b14ff5.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+75a701eb-0e3d-4cdb-223ca5bd-51291d99.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+76127f8c-9147-46a2-6e6fca97-9534327d.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+7d3d4f22-0c38-4bb4-eeb0149f-b6314ee2.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() 
+c6828840-920f-4d1b-2252b38e-1ed0f481.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+c6f933b4-e8e4-4520-827304ab-aa39d83f.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() 
+d22873f4-6d6a-495a-3a649d90-509b6a2e.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+e53ea5d2-b595-472e-59125aa7-7e81d3d4.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() 
+eaadf338-b67c-4e39-0f799f80-26fa29d0.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+080074df-4f64-4b50-49edc783-f8cb9547.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- [vec:Dialogs::Key]
+092e6190-3efe-4be1-8c5f48a9-81183f0b.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+0a66ad4f-6cbc-4163-c7ff6fa5-3b17eadd.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+0b42c404-d68f-4ba6-72f93c8f-2848a214.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+0b745624-69d0-439d-588c0da9-8838a2cf.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+0f646aaf-f65f-40e0-0e8c8abf-637c953f.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+11dd4694-3a9f-4f6c-f59243a3-733e8d6a.dmp   | SIGSEGV SIGSEGV @0x20 (near-null) | rip_in=telegram-desktop     | assert=- 
+128fa33e-1cc5-492f-9335b588-ad1fe4ae.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+12a80d5a-7f2d-4122-17ce129f-207b3f7e.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+1642ee17-0074-4790-2bac46b2-c23cd00e.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+1c5d03d8-96f0-4d06-5a5b26b8-85facb83.dmp   | SIGSEGV SIGSEGV @0x100000000 (canonical-wild) | rip_in=telegram-desktop     | assert=- 
+21de0132-17f5-4b76-d80ba182-15731889.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+231c40a9-1c14-4b12-5ad165a1-0a87e602.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=!(__hi < __lo) 
+2fff76eb-65b9-413a-09b74482-f01ece5b.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+329730c1-7335-4dff-fb3a5187-c115321f.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+33b9a801-4169-4f2e-1663deb7-226449a5.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+34b2e80c-281f-4012-29287884-2230a454.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+4017e9ef-4364-4bc8-df91d2b2-572fe3da.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=!(__hi < __lo) 
+46b07a28-a5ed-4932-7321ebbc-1a324e02.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+4b102b08-de42-4dfd-9cc4229a-cd622a7e.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+4de333be-e3c4-46a6-7319b195-0e69b943.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+4edccb15-5c4e-4913-8adf33be-fef3dda6.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+5043714f-2194-43a8-3226a6bf-734a2b0e.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+58b4b5fe-2da6-473a-167a11bc-90fbd512.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+5cd2e4d5-ca2d-47b8-30ed37aa-9c7b6fc0.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+622cd3f2-c465-4cd0-3cbfaebe-a332e004.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+62a40a6d-f34f-4380-ee6dae9f-0eb3b5a5.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=!(__hi < __lo) 
+6319cfa8-2435-4d85-a8bf7385-d5c452e5.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+665a4e44-5dfb-4c03-83d770ac-36d50fd4.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+678e8786-225b-4322-f7e94287-bedffc58.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+6adecf2e-af00-4b02-249c3d9b-951980dd.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+73e208b6-b424-45ad-5e336d87-37b74aea.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+74f13c11-ae59-49e1-7f59e39e-46b14ff5.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+7529f8b3-dc25-432d-d52ef68c-a5239239.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+75a701eb-0e3d-4cdb-223ca5bd-51291d99.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+76127f8c-9147-46a2-6e6fca97-9534327d.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+76ca322d-38fd-4a1b-7ce094bb-39868caa.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+7a2c3d36-9f2c-4e16-ee4e63a7-b3779544.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+7d3d4f22-0c38-4bb4-eeb0149f-b6314ee2.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() 
+81136544-d58b-4be8-fc47638f-7e0586a5.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+87036d61-c230-41a7-4f029cae-747acddc.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+896fdba3-e4e9-4d8d-7158ad8b-3982b4fd.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+92291290-2000-48f1-858ba0ad-6b776daa.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+9287ecef-dc61-473a-65cd76b7-912da9f5.dmp   | SIGSEGV SIGSEGV @0x4d91a2b4 (canonical-wild) | rip_in=telegram-desktop     | assert=- 
+93c46e51-5729-40fd-1194d9a1-780da210.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+a7a93900-cd89-4afa-fb982c92-3732aa79.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+ae66c689-6e0a-4695-461f6f81-46b5014c.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+aec0db3e-ecb2-4228-7819aaa6-b7febe94.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+b671040f-a0c0-4c78-79fc18b1-7ec17331.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+bc1fd883-a9a1-4b79-a69258b7-4f9a1855.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+be4e204c-619e-4eb8-eefe76b3-7544e143.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+c12a4187-6f3f-4f70-2bf59ab0-471a4a71.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+c21643a9-63ad-41e7-71ed3886-0eba77c5.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+c6828840-920f-4d1b-2252b38e-1ed0f481.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+c6f933b4-e8e4-4520-827304ab-aa39d83f.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() 
+ca6d8a97-05fb-4572-4c84a797-270e07d9.dmp   | SIGABRT ABORT (DoS)    | rip_in=libc.so.6            | assert=- 
+cc8b3381-a60e-4afe-211649a9-7ab25331.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+cdfa9fc2-0f09-4659-ca4a979b-2644b7e1.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=!(__hi < __lo) 
+cef87005-789d-477b-e39ea080-0ae9998a.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+d1b18851-1f70-4632-240328aa-4c494242.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+d22873f4-6d6a-495a-3a649d90-509b6a2e.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+de272e15-4b07-4214-c7f5c1a7-e904a4b9.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+e0171e74-134e-41c7-32341c91-d86bfe6f.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+e1af655e-7089-4fea-ad1e3fbe-26d35725.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+e2a21456-0a8b-46a4-0634ad8d-a4ac7b62.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+e53ea5d2-b595-472e-59125aa7-7e81d3d4.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() 
+e60f9fa3-77ea-4009-4d389f91-03d43348.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+e9d719f0-c582-4273-f97f51a6-515882f3.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+eaadf338-b67c-4e39-0f799f80-26fa29d0.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+ee12539c-2dfd-45f9-a65525a0-09dacd8a.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+ee263637-ef52-4847-8341ee80-204c6e6a.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+f4cb1567-51e3-4ad4-ed39169b-28abc1bb.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+f55e319b-6866-4bcc-5c378581-3066e0cd.dmp   | SIGSEGV SIGSEGV @0x0 (near-null) | rip_in=telegram-desktop     | assert=- 
+f675d73c-246d-4293-a3cfad84-a305fdee.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
+d22873f4-6d6a-495a-3a649d90-509b6a2e.dmp   | SIGABRT ABORT/hardening-assert (DoS) | rip_in=libc.so.6            | assert=__n < this->size() [vec:Dialogs::Key]
