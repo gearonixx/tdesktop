@@ -138,7 +138,15 @@ gsl::span<const mtpPrime> AbstractConnection::parseNotSecureResponse(
 			).arg(Logs::mb(answer, len * sizeof(mtpPrime)).str()));
 		return {};
 	}
-	return gsl::make_span(answer + 5, answerLen);
+	// `answerLen` is a byte length (see prepareNotSecurePacket, which writes
+	// it as `... << 2`), but `answer` points at mtpPrime (int32) elements and
+	// the callers use the returned span's size() as a prime count for the TL
+	// read boundary. Passing the byte length to make_span() as an element
+	// count would yield a span up to 4x longer than the real data and let the
+	// deserializer read past the packet allocation (out-of-bounds heap read,
+	// reachable pre-auth by a malicious/MITM server or MTProto proxy). Convert
+	// to a prime count so the boundary matches the validated data.
+	return gsl::make_span(answer + 5, answerLen / sizeof(mtpPrime));
 }
 
 mtpBuffer AbstractConnection::preparePQFake(const MTPint128 &nonce) const {

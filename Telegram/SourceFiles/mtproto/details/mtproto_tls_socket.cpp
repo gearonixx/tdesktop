@@ -754,6 +754,17 @@ void TlsSocket::checkHelloParts34(int parts123Size) {
 }
 
 void TlsSocket::checkHelloDigest() {
+	// The Server Hello length fields (part2/part4) are fully attacker-
+	// controlled, so `_serverHelloLength` can be as small as the fixed
+	// prefixes (down to ~16 bytes). The digest lives at a fixed offset
+	// `kServerHelloDigestPosition` and is `kHelloDigestLength` long, so the
+	// Server Hello must be at least that large - otherwise the subspan below
+	// would read (and zero-write) past `_incoming`. Reject short hellos.
+	if (_serverHelloLength < kServerHelloDigestPosition + kHelloDigestLength) {
+		logError(888, "Bad Server Hello length.");
+		handleError();
+		return;
+	}
 	const auto fulldata = bytes::make_detached_span(_incoming).subspan(
 		0,
 		kHelloDigestLength + _serverHelloLength);
