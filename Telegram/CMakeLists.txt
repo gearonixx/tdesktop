@@ -1661,6 +1661,8 @@ PRIVATE
     plazma/plazma_playlists.h
     plazma/plazma_session.cpp
     plazma/plazma_session.h
+    plazma/plazma_theme.cpp
+    plazma/plazma_theme.h
     profile/profile_block_widget.cpp
     profile/profile_block_widget.h
     profile/profile_cover_drop_area.cpp

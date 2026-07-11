@@ -53,6 +53,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "apiwrap.h"
 #include "dialogs/dialogs_widget.h"
 #include "plazma/plazma_feed_widget.h"
+#include "plazma/plazma_theme.h"
 #include "history/history_widget.h"
 #include "history/history_drag_area.h"
 #include "history/history_item_helpers.h" // GetErrorForSending.
@@ -276,8 +277,11 @@ MainWidget::MainWidget(
 	if (_dialogs) {
 		setupConnectingWidget();
 
-		// Plazma: overlay the video feed on the chat-list column. It logs into
-		// PlazmaServer with this Telegram session and shows GET /v1/videos.
+		// Plazma: paint the whole UI in the Plazma purple palette (integrated
+		// via Telegram's own theme engine), then overlay the video feed on the
+		// chat-list column. The feed logs into PlazmaServer with this Telegram
+		// session and shows GET /v1/videos.
+		Plazma::ApplyPlazmaPurpleTheme();
 		_plazmaFeed.reset(new Plazma::FeedWidget(
 			this,
 			&_controller->session()));

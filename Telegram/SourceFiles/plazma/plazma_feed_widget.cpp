@@ -94,7 +94,6 @@ private:
 		p.drawRoundedRect(thumb, 6, 6);
 
 		// A little play glyph so it reads as video.
-		p.setBrush(st::windowFgActive);
 		const auto cx = thumb.center().x();
 		const auto cy = thumb.center().y();
 		auto tri = QPainterPath();
