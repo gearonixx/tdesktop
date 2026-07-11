@@ -1653,6 +1653,12 @@ PRIVATE
     platform/platform_tray.h
     platform/platform_webauthn.h
     platform/platform_window_title.h
+    plazma/plazma_api.cpp
+    plazma/plazma_api.h
+    plazma/plazma_playlists.cpp
+    plazma/plazma_playlists.h
+    plazma/plazma_session.cpp
+    plazma/plazma_session.h
     profile/profile_block_widget.cpp
     profile/profile_block_widget.h
     profile/profile_cover_drop_area.cpp
