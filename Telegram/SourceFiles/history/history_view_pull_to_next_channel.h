@@ -42,11 +42,12 @@ public:
 
 	void updateGeometry();
 
+	[[nodiscard]] bool active() const;
+
 private:
 	class Indicator;
 	class HintOverlay;
 
-	[[nodiscard]] bool active() const;
 	[[nodiscard]] bool atBottom() const;
 	void handleOverscroll(
 		Ui::ElasticScrollPosition position,
