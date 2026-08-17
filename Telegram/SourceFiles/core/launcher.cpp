@@ -16,6 +16,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/crash_reports.h"
 #include "core/update_checker.h"
 #include "core/sandbox.h"
+#include "local_ai/local_ai_config.h"
 #include "core/version.h"
 #include "base/concurrent_timer.h"
 #include "base/options.h"
@@ -453,6 +454,12 @@ void Launcher::workingFolderReady() {
 	ComputeExternalUpdater();
 	ComputeInstallBetaVersions();
 	ComputeInstallationTag();
+
+	if (LocalAi::Enabled() && !UpdaterDisabled()) {
+		// Local mode reaches exactly one host, the llama.cpp server, so the
+		// updater must not phone home either.
+		SetUpdaterDisabledAtStartup();
+	}
 }
 
 void Launcher::writeDebugModeSetting() {

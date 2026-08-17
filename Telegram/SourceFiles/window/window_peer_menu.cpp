@@ -62,6 +62,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/ui_utility.h"
 #include "main/main_app_config.h"
 #include "main/main_session.h"
+#include "local_ai/local_ai_chats.h"
 #include "main/main_session_settings.h"
 #include "menu/menu_mute.h"
 #include "menu/menu_ttl_validator.h"
@@ -319,6 +320,7 @@ private:
 	void addToggleArchive();
 	void addClearHistory();
 	void addDeleteChat();
+	void addLocalAiActions();
 	void addLeaveChat();
 	void addJoinChat();
 	void addTopicLink();
@@ -1812,6 +1814,11 @@ void Filler::fillChatsListActions() {
 	if (channel && channel->isCommunity()) {
 		fillCommunityChatsListActions();
 		return;
+	} else if (_peer && _peer->session().localAi().isModel(_peer)) {
+		addLocalAiActions();
+		addClearHistory();
+		addDeleteChat();
+		return;
 	} else if (!_peer || !_peer->isForum()) {
 		return;
 	}
@@ -1882,7 +1889,27 @@ void Filler::fillContextMenuActions() {
 	addDeleteTopic();
 }
 
+void Filler::addLocalAiActions() {
+	if (!_peer || !_peer->session().localAi().isModel(_peer)) {
+		return;
+	}
+	const auto controller = _controller;
+	const auto history = _peer->owner().history(_peer);
+	auto &chats = _peer->session().localAi();
+	if (chats.generating(history)) {
+		_addAction(u"Stop generating"_q, [=] {
+			controller->session().localAi().stop(history);
+		}, &st::menuIconCancel);
+	} else {
+		_addAction(u"Regenerate answer"_q, [=] {
+			controller->session().localAi().regenerate(history);
+		}, &st::menuIconRestore);
+	}
+	_addAction(PeerMenuCallback::Args{ .isSeparator = true });
+}
+
 void Filler::fillHistoryActions() {
+	addLocalAiActions();
 	addToggleMuteSubmenu(true);
 	addCreateTopic();
 	addInfo();

@@ -13,6 +13,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/crash_reports.h"
 #include "main/main_account.h"
 #include "main/main_session.h"
+#include "local_ai/local_ai_bootstrap.h"
 #include "data/data_session.h"
 #include "data/data_changes.h"
 #include "data/data_user.h"
@@ -135,6 +136,11 @@ void Domain::activateAfterStarting() {
 		}
 		watchSession(account.get());
 	}
+
+	// There is no sign-in step when the chats are local models, so the
+	// account gets its synthetic session before the window is built and the
+	// intro is never shown.
+	LocalAi::CreateLocalSession(toActivate);
 
 	activate(toActivate);
 	removePasscodeIfEmpty();

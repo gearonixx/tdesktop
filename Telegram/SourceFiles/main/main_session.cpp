@@ -44,6 +44,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/components/top_peers.h"
 #include "settings/settings_faq_suggestions.h"
 #include "settings/settings_recent_searches.h"
+#include "local_ai/local_ai_chats.h"
 #include "data/data_session.h"
 #include "data/data_changes.h"
 #include "data/data_user.h"
@@ -121,6 +122,7 @@ Session::Session(
 , _giftAuctions(std::make_unique<Data::GiftAuctions>(this))
 , _scheduledMessages(std::make_unique<Data::ScheduledMessages>(this))
 , _ephemeralMessages(std::make_unique<Data::EphemeralMessages>(this))
+, _localAi(std::make_unique<LocalAi::Chats>(this))
 , _sponsoredMessages(std::make_unique<Data::SponsoredMessages>(this))
 , _topPeers(std::make_unique<Data::TopPeers>(this, Data::TopPeerType::Chat))
 , _topBotApps(
@@ -264,6 +266,12 @@ Session::Session(
 	) | rpl::on_next([=] {
 		appConfigRefreshed();
 	}, _lifetime);
+
+	// The local model chats are built from our own files, not from dialog
+	// updates, so they are filled in once the session is fully constructed.
+	crl::on_main(this, [=] {
+		_localAi->bootstrap();
+	});
 }
 
 void Session::appConfigRefreshed() {

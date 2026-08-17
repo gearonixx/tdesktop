@@ -16,6 +16,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mtproto/config_loader.h"
 #include "mtproto/sender.h"
 #include "storage/localstorage.h"
+#include "local_ai/local_ai_config.h" // LocalAi::Enabled.
 #include "calls/calls_instance.h"
 #include "main/main_account.h" // Account::configUpdated.
 #include "core/application.h"
@@ -373,6 +374,14 @@ Instance::Private::Private(
 }
 
 void Instance::Private::start() {
+	// In local AI mode the app talks to a llama.cpp server over plain HTTP
+	// and to nothing else, so no MTProto session is ever opened: creating one
+	// would already dial Telegram to negotiate an auth key.
+	const auto localOnly = LocalAi::Enabled();
+	if (localOnly) {
+		_checkDelayedTimer.setCallback([this] { checkDelayedRequests(); });
+		return;
+	}
 	if (isKeysDestroyer()) {
 		for (const auto &[shiftedDcId, dc] : _dcenters) {
 			startSession(shiftedDcId);
@@ -620,6 +629,11 @@ void Instance::Private::restart(ShiftedDcId shiftedDcId) {
 }
 
 int32 Instance::Private::dcstate(ShiftedDcId shiftedDcId) {
+	if (!_mainSession && LocalAi::Enabled()) {
+		// There is no cloud to be connected to, and the UI should not offer
+		// a "Connecting..." state that can never resolve.
+		return ConnectedState;
+	}
 	if (!shiftedDcId) {
 		Assert(_mainSession != nullptr);
 		return _mainSession->getState();
@@ -637,6 +651,9 @@ int32 Instance::Private::dcstate(ShiftedDcId shiftedDcId) {
 }
 
 QString Instance::Private::dctransport(ShiftedDcId shiftedDcId) {
+	if (!_mainSession && LocalAi::Enabled()) {
+		return QString();
+	}
 	if (!shiftedDcId) {
 		Assert(_mainSession != nullptr);
 		return _mainSession->transport();
@@ -653,6 +670,9 @@ QString Instance::Private::dctransport(ShiftedDcId shiftedDcId) {
 }
 
 void Instance::Private::ping() {
+	if (!_mainSession && LocalAi::Enabled()) {
+		return;
+	}
 	getSession(0)->ping();
 }
 
@@ -1016,6 +1036,13 @@ void Instance::Private::sendRequest(
 		crl::time msCanWait,
 		bool needsLayer,
 		mtpRequestId afterRequestId) {
+	if (LocalAi::Enabled()) {
+		// Local mode: drop the request instead of sending it. It is left
+		// unregistered, so cancel() and state() treat it as unknown and no
+		// callback ever runs -- in particular no 401 that would log us out
+		// of the synthetic local session.
+		return;
+	}
 	const auto session = getSession(shiftedDcId);
 
 	request->requestId = requestId;

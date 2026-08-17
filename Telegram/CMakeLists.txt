@@ -1389,6 +1389,18 @@ PRIVATE
     layout/layout_document_generic_preview.h
     layout/layout_item_base.cpp
     layout/layout_item_base.h
+    local_ai/local_ai_bootstrap.cpp
+    local_ai/local_ai_bootstrap.h
+    local_ai/local_ai_chats.cpp
+    local_ai/local_ai_chats.h
+    local_ai/local_ai_client.cpp
+    local_ai/local_ai_client.h
+    local_ai/local_ai_config.cpp
+    local_ai/local_ai_config.h
+    local_ai/local_ai_settings.cpp
+    local_ai/local_ai_settings.h
+    local_ai/local_ai_store.cpp
+    local_ai/local_ai_store.h
     main/main_account.cpp
     main/main_account.h
     main/main_app_config.cpp

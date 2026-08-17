@@ -32,6 +32,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/profile/info_profile_icon.h"
 #include "info/stories/info_stories_widget.h"
 #include "lang/lang_keys.h"
+#include "local_ai/local_ai_config.h"
+#include "local_ai/local_ai_settings.h"
 #include "main/main_account.h"
 #include "main/main_domain.h"
 #include "main/main_session.h"
@@ -659,7 +661,21 @@ void MainMenu::setupMenu() {
 			st::mainMenuButton,
 			std::move(descriptor));
 	};
-	if (!_controller->session().supportMode()) {
+	if (LocalAi::Enabled()) {
+		// The cloud-only entries below would all lead nowhere in local mode.
+		addAction(
+			rpl::single(u"Local AI settings"_q),
+			{ &st::menuIconSettings }
+		)->setClickedCallback([=] {
+			controller->show(Box(LocalAi::SettingsBox, controller));
+		});
+		addAction(
+			rpl::single(u"Refresh model list"_q),
+			{ &st::menuIconRestore }
+		)->setClickedCallback([=] {
+			LocalAi::RefreshModels(controller);
+		});
+	} else if (!_controller->session().supportMode()) {
 		_menu->add(
 			CreateButtonWithIcon(
 				_menu,

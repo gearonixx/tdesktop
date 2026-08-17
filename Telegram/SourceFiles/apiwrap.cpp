@@ -43,6 +43,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/business/data_shortcut_messages.h"
 #include "data/components/credits.h"
 #include "data/components/ephemeral_messages.h"
+#include "local_ai/local_ai_chats.h"
 #include "data/components/scheduled_messages.h"
 #include "data/notify/data_notify_settings.h"
 #include "data/data_changes.h"
@@ -2184,6 +2185,15 @@ void ApiWrap::deleteHistory(
 		bool revoke) {
 	auto deleteTillId = MsgId(0);
 	const auto history = _session->data().history(peer);
+	if (_session->localAi().isModel(peer)) {
+		// Local chats have no server side to ask, transcripts are ours.
+		if (justClear) {
+			_session->localAi().clearHistory(history);
+		} else {
+			_session->localAi().deleteChat(history);
+		}
+		return;
+	}
 	if (justClear) {
 		// In case of clear history we need to know the last server message.
 		while (history->lastMessageKnown()) {
@@ -4593,6 +4603,12 @@ void ApiWrap::sendMessage(
 		? replyTo->topicRootId()
 		: Data::ForumTopic::kGeneralId;
 	const auto topic = peer->forumTopicFor(topicRootId);
+	if (_session->localAi().trySend(message)) {
+		if (clearCloudDraft) {
+			history->clearCloudDraft(draftTopicRootId, draftMonoforumPeerId);
+		}
+		return;
+	}
 	const auto ephemeral = _session->ephemeralMessages().wouldSend(message);
 	if (!ephemeral
 		&& !(topic ? Data::CanSendTexts(topic) : Data::CanSendTexts(peer))) {
