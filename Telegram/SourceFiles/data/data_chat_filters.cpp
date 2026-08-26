@@ -955,8 +955,14 @@ bool ChatFilters::loadNextExceptions(bool chatsListLoaded) {
 			result.reserve(i->always().size());
 			for (const auto &history : i->always()) {
 				if (!history->folderKnown()) {
-					inputs.push_back(
-						MTP_inputDialogPeer(history->peer->input()));
+					if (const auto channel = history->peer->asChannel()
+						; channel && channel->isCommunity()) {
+						inputs.push_back(MTP_inputDialogPeerCommunity(
+							channel->inputChannel()));
+					} else {
+						inputs.push_back(MTP_inputDialogPeer(
+							history->peer->input()));
+					}
 				}
 			}
 		}
