@@ -530,6 +530,10 @@ void Manager::fillDefaults() {
 	set(u"%1+shift+down"_q.arg(ctrl) , Command::FolderNext);
 	set(u"%1+shift+up"_q.arg(ctrl)   , Command::FolderPrevious);
 
+	set(u"alt+1"_q                   , Command::ShowAccount1);
+	set(u"alt+2"_q                   , Command::ShowAccount2);
+	set(u"alt+3"_q                   , Command::ShowAccount3);
+
 	set(u"ctrl+0"_q                  , Command::ChatSelf);
 
 	set(u"ctrl+9"_q                  , Command::ShowArchive);
@@ -563,6 +567,7 @@ void Manager::writeDefaultFile() {
 	version.insert(u"version"_q, QString::number(AppVersion));
 	shortcuts.push_back(version);
 
+	auto written = base::flat_set<Command>();
 	for (const auto &[sequence, shortcut] : _shortcuts) {
 		const auto object = shortcut.get();
 		auto i = _commandByObject.findFirst(object);
@@ -574,12 +579,16 @@ void Manager::writeDefaultFile() {
 				entry.insert(u"keys"_q, sequence.toString().toLower());
 				entry.insert(u"command"_q, j->second);
 				shortcuts.append(entry);
+				written.emplace(i->second);
 			}
 		}
 	}
 
 	// Commands without a default value.
 	for (const auto c : ranges::views::concat(kShowAccount, kNoValue)) {
+		if (written.contains(c)) {
+			continue;
+		}
 		for (const auto &[name, command] : CommandByName) {
 			if (c == command) {
 				auto entry = QJsonObject();
